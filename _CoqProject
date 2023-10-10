@@ -1,3 +1,7 @@
 -R src Top 
 src/Common.v
 src/Simulation.v
+src/Language.v
+src/Assembly.v
+src/Compiler.v
+src/Verification.v
