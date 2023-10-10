@@ -44,12 +44,10 @@ Fixpoint read_mem' (m : list nat) (index : nat) : nat :=
 Inductive read_mem (p : asm_state) (n : nat) : Prop  :=
   | mi : read_mem' p.(mem) p.(ac) = n -> read_mem p n.
 
-Inductive mem_diff (m : list nat) (m' : list nat) (ac : nat) (n : nat) : Prop :=
+Inductive mem_diff (m : list nat) (m' : list nat) (ac : nat) : Prop :=
   | c_diff : Common.take ac m = Common.take ac m' ->
                Common.drop (ac+1) m = Common.drop (ac+1) m' ->
-               Common.drop (ac) (Common.take (ac+1) m') = (map (fun x => n))
-               (Common.drop (ac) (Common.take (ac+1) m)) 
-               -> mem_diff m m' ac n.
+               mem_diff m m' ac.
 
 (* Small-step operational semantics for our target language.*)
 
@@ -59,7 +57,8 @@ Inductive lang_semantics (p : asm_state) (p' : asm_state) : Prop :=
                p'.(ac) = (read_mem' p.(mem) n) -> lang_semantics p p'
   | asm_store: forall n, read_instr p (Store n) -> p.(pc) + 1 = p'.(pc) ->
                p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
-               p.(ac) = read_mem' p'.(mem) n -> lang_semantics p p'
+               p.(ac) = read_mem' p'.(mem) n -> mem_diff p.(mem) p'.(mem) p.(ac) ->
+               lang_semantics p p'
   | asm_add : forall n, read_instr p (Add n) -> p.(pc) + 1 = p'.(pc) ->
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
               p'.(ac) = p.(ac) + read_mem' p.(mem) n -> lang_semantics p p'
