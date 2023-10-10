@@ -1,7 +1,8 @@
 Require Import List.
 Import ListNotations.
 Require Import Common.
-
+Require Import PeanoNat.
+Import Nat.
 Module Language.
 Inductive lang_instr : Type :=
   | PtrInc : lang_instr
@@ -55,10 +56,20 @@ Inductive mem_diff_m (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
                (Common.drop (ptr) (Common.take (ptr+1) m)) 
                -> mem_diff_m m m' ptr.
 
-Fixpoint matching_jz (p : lang_state) :=
-  
+Fixpoint find_matching_jz' (prog : lang_program) (pc : nat) (c : nat) : nat :=
+  match prog with
+  | [] => 0
+  | Ret :: t => if c =? 0 then pc else find_matching_jz' t (pc+1) (c-1)
+  | Jump :: t => find_matching_jz' t (pc+1) (c+1)
+  | _ :: t => find_matching_jz' t (pc+1) c
+  end.
+Definition find_matching_jz (p : lang_state) : nat :=
+  find_matching_jz' (Common.drop (p.(pc)+1) p.(prog)) (p.(pc)+1) 0.
 
+Inductive matching_jz (p : lang_state) (pc : nat) : Prop :=
+  | c_match_jz : find_matching_jz p = pc -> matching_jz p pc.
 
+(*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
 Inductive lang_semantics (p : lang_state) (p' : lang_state) : Prop :=
   | lang_ptr_inc : read_instr p PtrInc -> p.(ptr) + 1 = p'.(ptr) ->
@@ -78,6 +89,10 @@ Inductive lang_semantics (p : lang_state) (p' : lang_state) : Prop :=
   | lang_jump_z : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> read_mem p 0 ->
-                  p'.(pc) = matching_jz p -> lang_semantics p p'.
+                  matching_jz p p'.(pc) -> lang_semantics p p'
+  | lang_jump_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
+                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
+                   length p.(mem) > p.(ptr) -> ~ (read_mem p 0) ->
+                   p.(pc) + 1 = p'.(pc) -> lang_semantics p p'.
                   
 End Language.
