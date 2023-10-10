@@ -37,4 +37,11 @@ Fixpoint drop {A : Type} (n : nat) (l : list A) : list A :=
   | S n', h::t => drop n' t
   end.
 
+Fixpoint init {A} (l : list A) : list A :=
+  match l with
+  | [] => []
+  | cons _ [] => []
+  | cons x xs => cons x (init xs)
+  end.
+
 End Common.
