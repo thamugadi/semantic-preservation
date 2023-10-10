@@ -15,6 +15,7 @@ Definition lang_program := list lang_instr.
 Record lang_state : Type := mkState
 { 
   prog : lang_program;
+  mem : list nat;
   pc : nat;
   ptr : nat;
 }.
@@ -30,8 +31,12 @@ Inductive read_instr (p : lang_state) (i : lang_instr) : Prop  :=
   | ri : read_instr' p.(prog) p.(pc) = i -> read_instr p i.
 
 (* Small-step operational semantics for our source language.*)
-
 Inductive lang_semantics (p : lang_state) (p' : lang_state) : Prop :=
   | lang_ptr_inc : read_instr p PtrInc -> p.(ptr) + 1 = p'.(ptr) ->
-                   p.(pc) + 1 = p'.(pc) -> lang_semantics p p'. 
+                   p.(pc) + 1 = p'.(pc) -> p.(prog) = p'.(prog) ->
+                   p.(mem) = p'.(mem) -> lang_semantics p p' 
+  | lang_ptr_dec : read_instr p PtrDec -> p.(ptr) - 1 = p'.(ptr) ->
+                   p.(pc) + 1 = p'.(pc) -> p.(prog) = p'.(prog) ->
+                   p.(mem) = p'.(mem) -> lang_semantics p p'.
+
 End Language.
