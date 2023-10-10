@@ -31,6 +31,16 @@ Fixpoint read_instr' (prog : lang_program) (pc : nat) : lang_instr :=
 Inductive read_instr (p : lang_state) (i : lang_instr) : Prop  :=
   | ri : read_instr' p.(prog) p.(pc) = i -> read_instr p i.
 
+Fixpoint read_mem' (m : list nat) (index : nat) : nat :=
+  match m, index with
+  | [], _ => 0
+  | i :: _, 0 => i
+  | _ :: t, S index' => read_mem' t index'
+  end.
+
+Inductive read_mem (p : lang_state) (n : nat) : Prop  :=
+  | mi : read_mem' p.(mem) p.(ptr) = n -> read_mem p n.
+
 Inductive mem_diff_p (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
   | c_diff_p : Common.take ptr m = Common.take ptr m' ->
                Common.drop (ptr+1) m = Common.drop (ptr+1) m' ->
@@ -45,6 +55,10 @@ Inductive mem_diff_m (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
                (Common.drop (ptr) (Common.take (ptr+1) m)) 
                -> mem_diff_m m m' ptr.
 
+Fixpoint matching_jz (p : lang_state) :=
+  
+
+
 (* Small-step operational semantics for our source language.*)
 Inductive lang_semantics (p : lang_state) (p' : lang_state) : Prop :=
   | lang_ptr_inc : read_instr p PtrInc -> p.(ptr) + 1 = p'.(ptr) ->
@@ -53,11 +67,17 @@ Inductive lang_semantics (p : lang_state) (p' : lang_state) : Prop :=
   | lang_ptr_dec : read_instr p PtrDec -> p.(ptr) - 1 = p'.(ptr) ->
                    p.(pc) + 1 = p'.(pc) -> p.(prog) = p'.(prog) ->
                    p.(mem) = p'.(mem) -> lang_semantics p p'
-  | lang_inc : read_instr p Inc -> length p.(mem) > p.(ptr) ->
+  | lang_inc : read_instr p Inc -> p.(ptr) = p'.(ptr) ->
+               length p.(mem) > p.(ptr) ->
                p.(pc) + 1 = p'.(pc) -> p.(prog) = p'.(prog) ->
                mem_diff_p p.(mem) p'.(mem) p.(ptr) -> lang_semantics p p' 
-  | lang_dec : read_instr p Dec -> length p.(mem) > p.(ptr) ->
+  | lang_dec : read_instr p Dec -> p.(ptr) = p'.(ptr) ->
+               length p.(mem) > p.(ptr) ->
                p.(pc) + 1 = p'.(pc) -> p.(prog) = p'.(prog) ->
-               mem_diff_m p.(mem) p'.(mem) p.(ptr) -> lang_semantics p p'. 
-  
+               mem_diff_m p.(mem) p'.(mem) p.(ptr) -> lang_semantics p p' 
+  | lang_jump_z : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
+                  p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
+                  length p.(mem) > p.(ptr) -> read_mem p 0 ->
+                  p'.(pc) = matching_jz p -> lang_semantics p p'.
+                  
 End Language.
