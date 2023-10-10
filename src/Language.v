@@ -1,10 +1,8 @@
-Module Language.
 Require Import List.
 Import ListNotations.
-Require Import PeanoNat.
 Require Import Common.
-Require Import Lia.
-Import Nat.
+
+Module Language.
 Inductive lang_instr : Type :=
   | PtrInc : lang_instr
   | PtrDec : lang_instr
@@ -36,15 +34,15 @@ Inductive read_instr (p : lang_state) (i : lang_instr) : Prop  :=
 Inductive mem_diff_p (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
   | c_diff_p : Common.take ptr m = Common.take ptr m' ->
                Common.drop (ptr+1) m = Common.drop (ptr+1) m' ->
-               Common.drop (ptr+1) (Common.take ptr m') = (map (fun x => x + 1))
-               (Common.drop (ptr+1) (Common.take ptr m)) 
+               Common.drop (ptr) (Common.take (ptr+1) m') = (map (fun x => x + 1))
+               (Common.drop (ptr) (Common.take (ptr+1) m)) 
                -> mem_diff_p m m' ptr.
 
 Inductive mem_diff_m (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
   | c_diff_m : Common.take ptr m = Common.take ptr m' ->
                Common.drop (ptr+1) m = Common.drop (ptr+1) m' ->
-               Common.drop (ptr+1) (Common.take ptr m') = (map (fun x => x - 1))
-               (Common.drop (ptr+1) (Common.take ptr m)) 
+               Common.drop (ptr) (Common.take (ptr+1) m') = (map (fun x => x - 1))
+               (Common.drop (ptr) (Common.take (ptr+1) m)) 
                -> mem_diff_m m m' ptr.
 
 (* Small-step operational semantics for our source language.*)
