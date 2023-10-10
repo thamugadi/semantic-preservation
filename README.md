@@ -8,7 +8,7 @@ Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 ## Semantics
 
 - It is assumed that the operational semantics of the two languages, target and source, have been formalised.
-- (not done yet) in the example given in this repository, we will define small-step semantics for two basic languages: a source language and an assembly language for a virtual architecture: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
+- In the example given in this repository, we will define small-step semantics for two basic languages: a source language and an assembly language for a virtual architecture: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
   
 ## Simulation property
 
