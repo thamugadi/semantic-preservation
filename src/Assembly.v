@@ -57,14 +57,14 @@ Inductive semantics (p : state) (p' : state) : Prop :=
                p'.(ac) = (read_mem' p.(mem) n) -> semantics p p'
   | store: forall n, read_instr p (Store n) -> p.(pc) + 1 = p'.(pc) ->
                p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
-               p.(ac) = read_mem' p'.(mem) n -> mem_diff p.(mem) p'.(mem) p.(ac) ->
-               semantics p p'
+               p.(ac) = read_mem' p'.(mem) n ->
+               mem_diff p.(mem) p'.(mem) p.(ac) -> semantics p p'
   | add : forall n, read_instr p (Add n) -> p.(pc) + 1 = p'.(pc) ->
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-              p'.(ac) = p.(ac) + read_mem' p.(mem) n -> semantics p p'
+              p'.(ac) = p.(ac) + n -> semantics p p'
   | sub : forall n, read_instr p (Sub n) -> p.(pc) + 1 = p'.(pc) ->
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-              p'.(ac) = p.(ac) - read_mem' p.(mem) n -> semantics p p'
+              p'.(ac) = p.(ac) - n -> semantics p p'
   | jump : forall n, read_instr p (Jump n) -> p.(prog) = p'.(prog) ->
                p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> p'.(pc) = n ->
                semantics p p'
