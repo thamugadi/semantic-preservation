@@ -67,25 +67,26 @@ Fixpoint link_ret' (p : Assembly.program) (pos : nat) (c : list nat) : Assembly.
   match p with
   | [] => []
   | Assembly.Jump 0 :: t => Assembly.Jump 0 :: link_ret' t (pos+1) (pos::c)
-  | Assembly.Jump 1 :: t => Assembly.Jump (safe_head c) :: link_ret' t (pos+1) (tail c)
+  | Assembly.Jump 1 :: t => Assembly.Jump (safe_head c + 1) :: link_ret' t (pos+1) (tail c)
   | i :: t => i :: link_ret' t (pos+1) c 
   end.
 
 Definition link_ret (p : Assembly.program) : Assembly.program := link_ret' p 0 [].
 
-Fixpoint get_index (l: Assembly.program) (start_idx: nat) : option nat :=
+Fixpoint get_index (l: Assembly.program) (start_idx: nat) (c : nat) : option nat :=
   match l with
   | [] => None
-  | Assembly.Jump 1 :: t => Some start_idx
-  | _ :: t => get_index t (start_idx + 1)
+  | Assembly.Jump 0 :: t => get_index t (start_idx + 1) (c + 1)
+  | Assembly.Jump _ :: t => if c =? 0 then Some start_idx else get_index t (start_idx + 1) (c - 1)
+  | _ :: t => get_index t (start_idx + 1) c
   end.
 
 Fixpoint link_jump' (l: Assembly.program) (idx : nat) : Assembly.program :=
   match l with
   | [] => []
   | h :: t => match h with
-              | Assembly.Jump 0 => match get_index t (idx + 1) with
-                                   | Some i => Assembly.Jump i :: link_jump' t (idx + 1)
+              | Assembly.Jump 0 => match get_index t (idx + 1) 0 with
+                                   | Some i => Assembly.Jump (i + 1) :: link_jump' t (idx + 1)
                                    | None   => h :: link_jump' t (idx + 1)
                                    end
               | _ => h :: link_jump' t (idx + 1)
@@ -99,6 +100,8 @@ Definition link (l : Assembly.program) : Assembly.program := link_jump (link_ret
 Definition compile' (p : Language.state) : Assembly.state :=
   Assembly.mkState (link (compile'' p.(Language.prog))) p.(Language.mem)
                    (new_pc p.(Language.prog) p.(Language.pc)) p.(Language.ptr) 0.
+
+Compute (link (compile'' [Language.PtrInc; Language.Jump; Language.Halt; Language.Halt; Language.Ret])).
 
 Definition compile (p : Language.state) : option Assembly.state :=
   match matched p.(Language.prog) with
