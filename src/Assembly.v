@@ -6,8 +6,6 @@ Import Nat.
 Module Assembly.
 
 Inductive instr : Type :=
-  | Load : nat -> instr
-  | Store : nat -> instr
   | Load_r : instr
   | Store_r : instr
   | Add : nat -> instr
@@ -57,16 +55,9 @@ Inductive mem_diff (m : list nat) (m' : list nat) (ac : nat) : Prop :=
 (* Small-step operational semantics for our target language.*)
 
 Inductive semantics (p : state) (p' : state) : Prop :=
-  | load : forall n, read_instr p (Load n) -> p.(pc) + 1 = p'.(pc) ->
-               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
-               p'.(ac) = (read_mem' p.(mem) n) -> semantics p p'
   | load_r : read_instr p (Load_r) -> p.(pc) + 1 = p'.(pc) ->
              p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
              p'.(ac) = (read_mem' p.(mem) p.(b)) -> semantics p p'
-  | store: forall n, read_instr p (Store n) -> p.(pc) + 1 = p'.(pc) ->
-               p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
-               p.(ac) = read_mem' p'.(mem) n -> p.(b) = p'.(b) ->
-               mem_diff p.(mem) p'.(mem) p.(ac) -> semantics p p'
   | store_r: read_instr p (Store_r) -> p.(pc) + 1 = p'.(pc) ->
            p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
            p.(ac) = read_mem' p'.(mem) p.(ac) -> p.(b) = p'.(b) ->
