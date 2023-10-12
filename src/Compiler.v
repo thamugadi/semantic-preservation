@@ -27,15 +27,15 @@ Fixpoint compile'' (p : Language.program): (Assembly.program) :=
   | Language.PtrInc :: t => (Assembly.Add 1) :: compile'' t
   | Language.PtrDec :: t => (Assembly.Sub 1) :: compile'' t
   | Language.Inc :: t =>  Assembly.Swap   ::
-                          Assembly.Load_r ::
+                          Assembly.Load   ::
                           Assembly.Add 1  ::
-                          Assembly.Store_r::
+                          Assembly.Store  ::
                           Assembly.Zero   ::
                           Assembly.Swap   :: compile'' t
   | Language.Dec :: t =>  Assembly.Swap   ::
-                          Assembly.Load_r ::
+                          Assembly.Load   ::
                           Assembly.Sub 1  ::
-                          Assembly.Store_r::
+                          Assembly.Store  ::
                           Assembly.Zero   ::
                           Assembly.Swap   :: compile'' t
 
