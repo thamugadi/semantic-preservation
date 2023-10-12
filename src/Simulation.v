@@ -1,6 +1,14 @@
 Require Import Common. 
 Module Simulation.
 
+Definition lockstep_forward_sim {A : Type} {B : Type} 
+  (compile : A -> B -> Prop)
+  (eval : A -> A -> Prop)
+  (eval': B -> B -> Prop) := 
+    forall p q, compile p q ->
+    forall p', eval p p' -> 
+    exists q', eval' q q' /\ compile p' q'.
+
 Definition lockstep_backward_sim {A : Type} {B : Type} 
   (compile : A -> B -> Prop)
   (eval : A -> A -> Prop)

@@ -113,3 +113,5 @@ Definition compile (p : Language.state) : option Assembly.state :=
   end.
 
 Compute (compile (Language.mkState [Language.PtrInc; Language.Inc; Language.Dec] [0;0;0;0;0;0;0;0;0] 0 0)).
+
+End Compiler.
