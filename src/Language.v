@@ -66,9 +66,6 @@ Fixpoint find_matching_ret' (prog : program) (pc : nat) (c : nat) : nat :=
 Definition find_matching_ret (p : state) : nat :=
   find_matching_ret' (Common.drop (p.(pc)+1) p.(prog)) (p.(pc)+1) 0.
 
-Inductive matching_ret (p : state) (pc : nat) : Prop :=
-  | c_match_ret : find_matching_ret p = pc -> matching_ret p pc.
-
 Fixpoint find_matching_jmp' (prog : list instr) (pc : nat) (c : nat) : nat :=
   match prog with
   | [] => 0
@@ -79,9 +76,6 @@ Fixpoint find_matching_jmp' (prog : list instr) (pc : nat) (c : nat) : nat :=
 
 Definition find_matching_jmp (p : state) : nat :=
   find_matching_jmp' (Common.take (p.(pc)) p.(prog)) (p.(pc)-1) 0.
-
-Inductive matching_jmp (p : state) (pc : nat) : Prop :=
-  | c_match_jmp : find_matching_jmp p = pc -> matching_jmp p pc.
 
 (*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
@@ -103,7 +97,7 @@ Inductive semantics (p : state) (p' : state) : Prop :=
   | jump_z : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> read_mem p 0 ->
-                  matching_ret p p'.(pc) -> semantics p p'
+                  semantics p p'
   | jump_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                    p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                    length p.(mem) > p.(ptr) -> ~ (read_mem p 0) ->
@@ -111,7 +105,7 @@ Inductive semantics (p : state) (p' : state) : Prop :=
   | ret_z :  read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> read_mem p 0 ->
-                  matching_jmp p p'.(pc) -> semantics p p'
+                  semantics p p'
   | ret_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> ~ (read_mem p 0) ->

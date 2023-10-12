@@ -18,8 +18,7 @@ Fixpoint matched' (p : Language.program) (c : nat) : bool :=
     | _ :: l => matched' l c
     end
   end.
-Definition matched (p : Language.program) : bool :=
-  matched' p 1.
+Definition matched (p : Language.program) : bool := matched' p 1.
 
 (* won't compute new addresses *)
 Fixpoint compile'' (p : Language.program): (Assembly.program) :=
@@ -44,17 +43,19 @@ Fixpoint compile'' (p : Language.program): (Assembly.program) :=
   | Language.Halt :: t => Assembly.Halt   :: compile'' t
   end.
 
-Fixpoint new_pc (p : Language.program) (pc c c' : nat) : nat :=
+Fixpoint new_pc' (p : Language.program) (pc c c' : nat) : nat :=
   match p with
   | [] => 0
-  | Language.PtrInc :: t => if c =? pc then c' else new_pc t pc (c+1) (c'+1)
-  | Language.PtrDec :: t => if c =? pc then c' else new_pc t pc (c+1) (c'+1)
-  | Language.Inc :: t =>    if c =? pc then c' else new_pc t pc (c+1) (c'+5)
-  | Language.Dec :: t =>    if c =? pc then c' else new_pc t pc (c+1) (c'+5)
-  | Language.Jump :: t =>   if c =? pc then c' else new_pc t pc (c+1) (c'+2)
-  | Language.Ret :: t =>    if c =? pc then c' else new_pc t pc (c+1) (c'+2)
-  | Language.Halt :: t =>   if c =? pc then c' else new_pc t pc (c+1) (c'+1)
+  | Language.PtrInc :: t => if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
+  | Language.PtrDec :: t => if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
+  | Language.Inc :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+5)
+  | Language.Dec :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+5)
+  | Language.Jump :: t =>   if c =? pc then c' else new_pc' t pc (c+1) (c'+2)
+  | Language.Ret :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+2)
+  | Language.Halt :: t =>   if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
   end.
+
+Definition new_pc (p : Language.program) (pc : nat) : nat := new_pc' p pc 0 0.
 
 Definition safe_head (p : list nat) : nat :=
   match p with
@@ -95,4 +96,8 @@ Definition link_jump (l : Assembly.program) : Assembly.program := link_jump' l 0
 
 Definition link (l : Assembly.program) : Assembly.program := link_jump (link_ret l).
 
-Fixpoint compile' (p : Language.state) : Assembly.state :=
+Definition compile' (p : Language.state) : Assembly.state :=
+  Assembly.mkState (link (compile'' p.(Language.prog))) p.(Language.mem)
+                   (new_pc p.(Language.prog) p.(Language.pc)) p.(Language.ptr) 0.
+
+Definition compile (p : Language.state) : option Assembly.state :=
