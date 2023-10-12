@@ -27,15 +27,18 @@ Fixpoint compile'' (p : Language.program): (Assembly.program) :=
   | Language.PtrInc :: t => (Assembly.Add 1) :: compile'' t
   | Language.PtrDec :: t => (Assembly.Sub 1) :: compile'' t
   | Language.Inc :: t =>  Assembly.Swap   ::
-                          Assembly.Mov    ::
+                          Assembly.Load_r ::
                           Assembly.Add 1  ::
+                          Assembly.Store_r::
                           Assembly.Zero   ::
                           Assembly.Swap   :: compile'' t
   | Language.Dec :: t =>  Assembly.Swap   ::
-                          Assembly.Mov    ::
+                          Assembly.Load_r ::
                           Assembly.Sub 1  ::
+                          Assembly.Store_r::
                           Assembly.Zero   ::
                           Assembly.Swap   :: compile'' t
+
   | Language.Jump :: t => Assembly.Skip   ::
                           Assembly.Jump 0 :: compile'' t
   | Language.Ret :: t =>  Assembly.Skip   ::
@@ -48,8 +51,8 @@ Fixpoint new_pc' (p : Language.program) (pc c c' : nat) : nat :=
   | [] => 0
   | Language.PtrInc :: t => if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
   | Language.PtrDec :: t => if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
-  | Language.Inc :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+5)
-  | Language.Dec :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+5)
+  | Language.Inc :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+6)
+  | Language.Dec :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+6)
   | Language.Jump :: t =>   if c =? pc then c' else new_pc' t pc (c+1) (c'+2)
   | Language.Ret :: t =>    if c =? pc then c' else new_pc' t pc (c+1) (c'+2)
   | Language.Halt :: t =>   if c =? pc then c' else new_pc' t pc (c+1) (c'+1)
@@ -61,7 +64,7 @@ Definition safe_head (p : list nat) : nat :=
   match p with
   | [] => 0
   | h :: l => h
-  end. (* no risk of unmatched jump / ret, thanks to Language.matching_ret *)
+  end. (* no risk of unmatched jump / ret, thanks to `matched` *)
 
 Fixpoint link_ret' (p : Assembly.program) (pos : nat) (c : list nat) : Assembly.program :=
   match p with
@@ -108,3 +111,5 @@ Definition compile (p : Language.state) : option Assembly.state :=
   | false => None
   | true => Some (compile' p)
   end.
+
+Compute (compile (Language.mkState [Language.PtrInc; Language.Inc; Language.Dec] [0;0;0;0;0;0;0;0;0] 0 0)).

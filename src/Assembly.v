@@ -15,7 +15,6 @@ Inductive instr : Type :=
   | Jump : nat -> instr
   | Skip : instr
   | Swap : instr
-  | Mov : instr
   | Zero : instr
   | Halt : instr.
 
@@ -90,9 +89,6 @@ Inductive semantics (p : state) (p' : state) : Prop :=
   | swap : read_instr p (Swap) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
            p.(ac) = p'.(b) -> p.(b) = p'.(ac) -> p'.(pc) = p.(pc) + 1 ->
            semantics p p'
-  | mov : read_instr p (Mov) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-          p'.(b) = p.(ac) -> p.(ac) = p'.(ac) -> p'.(pc) = p.(pc) + 1 ->
-          semantics p p'
   | zero : read_instr p (Zero) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
            p'.(b) = p.(b) -> 0 = p'.(ac) -> p'.(pc) = p.(pc) + 1 ->
            semantics p p'.
