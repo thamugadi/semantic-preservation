@@ -101,3 +101,7 @@ Definition compile' (p : Language.state) : Assembly.state :=
                    (new_pc p.(Language.prog) p.(Language.pc)) p.(Language.ptr) 0.
 
 Definition compile (p : Language.state) : option Assembly.state :=
+  match matched p.(Language.prog) with
+  | false => None
+  | true => Some (compile' p)
+  end.

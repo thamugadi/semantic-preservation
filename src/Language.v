@@ -56,27 +56,6 @@ Inductive mem_diff_m (m : list nat) (m' : list nat) (ptr : nat) : Prop :=
                (Common.drop (ptr) (Common.take (ptr+1) m)) 
                -> mem_diff_m m m' ptr.
 
-Fixpoint find_matching_ret' (prog : program) (pc : nat) (c : nat) : nat :=
-  match prog with
-  | [] => 0
-  | Ret :: t => if c =? 0 then pc else find_matching_ret' t (pc+1) (c-1)
-  | Jump :: t => find_matching_ret' t (pc+1) (c+1)
-  | _ :: t => find_matching_ret' t (pc+1) c
-  end.
-Definition find_matching_ret (p : state) : nat :=
-  find_matching_ret' (Common.drop (p.(pc)+1) p.(prog)) (p.(pc)+1) 0.
-
-Fixpoint find_matching_jmp' (prog : list instr) (pc : nat) (c : nat) : nat :=
-  match prog with
-  | [] => 0
-  | cons Jump t => if c =? 0 then pc else find_matching_jmp' t (pc+1) (c-1)
-  | cons Ret t => find_matching_jmp' t (pc-1) (c+1)
-  | cons _ t => find_matching_jmp' t (pc-1) c
-  end.
-
-Definition find_matching_jmp (p : state) : nat :=
-  find_matching_jmp' (Common.take (p.(pc)) p.(prog)) (p.(pc)-1) 0.
-
 (*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
 Inductive semantics (p : state) (p' : state) : Prop :=
