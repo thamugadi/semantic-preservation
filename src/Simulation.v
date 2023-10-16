@@ -7,7 +7,7 @@ Definition lockstep_forward_sim {A : Type} {B : Type}
   (eval': B -> B -> Prop) := 
     forall p q, compile p q ->
     forall p', eval p p' -> 
-    exists q', eval' q q' /\ compile p' q'.
+    exists q', compile p' q' /\ eval' q q'.
 
 Definition lockstep_backward_sim {A : Type} {B : Type} 
   (compile : A -> B -> Prop)
@@ -15,7 +15,7 @@ Definition lockstep_backward_sim {A : Type} {B : Type}
   (eval': B -> B -> Prop) := 
     forall p q, compile p q ->
     forall q', eval' q q' -> 
-    exists p', eval p p' /\ compile p' q'.
+    exists p', compile p' q' /\ eval p p'.
 
 Definition lockstep_bisim {A : Type} {B : Type} 
   (compile : A -> B -> Prop)
@@ -33,7 +33,7 @@ Definition plus_forward_sim {A : Type} {B : Type}
   (eval': B -> B -> Prop) :=
     forall p q, compile p q ->
     forall p', eval p p' ->
-    exists q', (Common.plus eval') q q' /\ compile p' q'.
+    exists q', compile p' q' /\ (Common.plus eval') q q'.
 
 Definition plus_backward_sim {A : Type} {B : Type}
   (compile : A -> B -> Prop)
