@@ -18,7 +18,9 @@ Fixpoint matched' (p : Language.program) (c : nat) : bool :=
     | _ :: l => matched' l c
     end
   end.
-Definition matched (p : Language.program) : bool := matched' p 1.
+
+Inductive matched (p : Language.program) : Prop :=
+  | match_r : matched' p 1 = true -> matched p.
 
 (* won't compute new addresses *)
 Fixpoint compile'' (p : Language.program): (Assembly.program) :=
@@ -106,12 +108,7 @@ Definition compile' (p : Language.state) : Assembly.state :=
 
 Compute (link (compile'' [Language.PtrInc; Language.Jump; Language.Halt; Language.Halt; Language.Ret])).
 
-Definition compile (p : Language.state) : option Assembly.state :=
-  match matched p.(Language.prog) with
-  | false => None
-  | true => Some (compile' p)
-  end.
-
-Compute (compile (Language.mkState [Language.PtrInc; Language.Inc; Language.Dec] [0;0;0;0;0;0;0;0;0] 0 0)).
+Inductive compile (p : Language.state) (q : Assembly.state) : Prop :=
+  | comp_r : matched p.(Language.prog) -> q = compile' p -> compile p q.
 
 End Compiler.
