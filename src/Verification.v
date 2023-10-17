@@ -46,23 +46,55 @@ Proof.
 Admitted.
 
 Theorem sequence_comp_ptrinc :
-  forall p p' q, Compiler.compile p q -> eval p p' ->
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.PtrInc ->
-              exists q', (eval' q q' /\ Assembly.read_instr q' 
-              (first_comp_instr (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).   
+              eval' q q'.
+Proof.
+Admitted.
+Theorem sequence_comp_ptrdec :
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
+              Language.read_instr p Language.PtrDec ->
+              eval' q q'.
 Proof.
 Admitted.
 Theorem sequence_comp_inc :
-  forall p p' q, Compiler.compile p q -> eval p p' ->
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Inc ->
-              exists q'1, (eval' q q'1 /\ Assembly.read_instr q'1 Assembly.Swap) /\
-              exists q'2, (eval' q'1 q'2 /\ Assembly.read_instr q'2 Assembly.Load) /\
-              exists q'3, (eval' q'2 q'3 /\ Assembly.read_instr q'3 (Assembly.Add 1)) /\
-              exists q'4, (eval' q'3 q'4 /\ Assembly.read_instr q'4 Assembly.Store) /\
-              exists q'5, (eval' q'4 q'5 /\ Assembly.read_instr q'5 Assembly.Zero) /\
-              exists q'6, (eval' q'5 q'6 /\ Assembly.read_instr q'6 Assembly.Swap) /\
-              exists q', (eval' q'6 q' /\ Assembly.read_instr q'
-              (first_comp_instr (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).   
+              exists q'1, (eval' q q'1) /\
+              exists q'2, (eval' q'1 q'2) /\
+              exists q'3, (eval' q'2 q'3) /\
+              exists q'4, (eval' q'3 q'4) /\
+              exists q'5, (eval' q'4 q'5) /\
+              exists q'6, (eval' q'5 q'6) /\
+              eval' q'6 q'.
+Proof.
+Admitted.
+Theorem sequence_comp_dec :
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
+              Language.read_instr p Language.Dec ->
+              exists q'1, (eval' q q'1) /\
+              exists q'2, (eval' q'1 q'2) /\
+              exists q'3, (eval' q'2 q'3) /\
+              exists q'4, (eval' q'3 q'4) /\
+              exists q'5, (eval' q'4 q'5) /\
+              exists q'6, (eval' q'5 q'6) /\
+              eval' q'6 q'.
+Proof.
+Admitted.
+Theorem sequence_comp_jump :
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
+              Language.read_instr p Language.Jump ->
+              exists q'1, (eval' q q'1) /\
+              exists q'2, (eval' q'1 q'2) /\
+              eval' q'2 q'.
+Proof.
+Admitted.
+Theorem sequence_comp_ret :
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
+              Language.read_instr p Language.Ret ->
+              exists q'1, (eval' q q'1) /\
+              exists q'2, (eval' q'1 q'2) /\
+              eval' q'2 q'.
 Proof.
 Admitted.
 Theorem comp_correct : 
@@ -84,36 +116,6 @@ Proof.
       reflexivity.
     + inversion compileH.
       remember (Compiler.compile' p') as q'.
-      assert (q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
-              q.(Assembly.ac) = p.(Language.ptr) /\
-              q.(Assembly.mem) = p.(Language.mem) /\
-              q.(Assembly.b) = 0).
-      apply comp_newstate.
-      assumption.
-      assert (q'.(Assembly.pc) = Compiler.new_pc (p'.(Language.prog)) (p'.(Language.pc)) /\
-              q'.(Assembly.ac) = p'.(Language.ptr) /\
-              q'.(Assembly.mem) = p'.(Language.mem) /\
-              q'.(Assembly.b) = 0).
-      {  
-        apply comp_newstate.
-        apply Compiler.comp_r. 
-        assumption.
-        assumption.
-      }
-      destruct H7. destruct H9. destruct H10.
-      destruct H8. destruct H12. destruct H13.
-      assert (Assembly.read_instr q' (first_comp_instr
-               (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).
-      {
-        apply first_instr_comp with (p := p').
-        apply Compiler.comp_r.
-        assumption.
-        assumption.
-        apply Language.ri.
-        reflexivity.
-      }
-      remember ((first_comp_instr (Language.read_instr'
-               (Language.prog p') (Language.pc p')))) as i.
       
       (* todo: prove sufficient conditions 
                for eval'+ q q' to hold, instead of the stronger eval' q q'*)
