@@ -12,15 +12,6 @@ Module Verification.
 Definition eval := Language.semantics.
 Definition eval' := Assembly.semantics.
 
-Theorem comp_newstate :
-  forall p q, Compiler.compile p q ->
-              q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
-              q.(Assembly.ac) = p.(Language.ptr) /\
-              q.(Assembly.mem) = p.(Language.mem) /\
-              q.(Assembly.b) = 0.
-Proof.
-Admitted.
-
 Theorem match_preserve : 
   forall p p', Language.semantics p p' ->
                Compiler.matched (Language.prog p) ->
@@ -45,56 +36,232 @@ Theorem first_instr_comp : forall p q i, Compiler.compile p q ->
 Proof.
 Admitted.
 
+Theorem comp_newstate :
+  forall p q, Compiler.compile p q ->
+              q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
+              q.(Assembly.ac) = p.(Language.ptr) /\
+              q.(Assembly.mem) = p.(Language.mem) /\
+              q.(Assembly.b) = 0 /\
+              Assembly.read_instr q (first_comp_instr
+              (Language.read_instr' p.(Language.prog) p.(Language.pc))).
+Proof.
+Admitted.
+Theorem comp_newstate' :
+  forall p q i, Compiler.compile p q -> Language.read_instr p i ->
+              q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
+              q.(Assembly.ac) = p.(Language.ptr) /\
+              q.(Assembly.mem) = p.(Language.mem) /\
+              q.(Assembly.b) = 0 /\
+              Assembly.read_instr q (first_comp_instr i).
+Proof.
+Admitted.
+Definition emitted_instr (i : Language.instr) : nat :=
+  match i with
+  | Language.PtrInc => 1
+  | Language.PtrDec => 1
+  | Language.Inc => 6
+  | Language.Dec => 6
+  | Language.Jump => 2
+  | Language.Ret => 2
+  | Language.Halt => 1
+  end.
+
+Theorem offset_newpc :
+  forall p p',
+  eval p p' -> Compiler.new_pc (Language.prog p') (Language.pc p') =
+               Compiler.new_pc (Language.prog p) (Language.pc p) 
+               + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)).
+Proof.
+Admitted.
+
+Theorem constant_code : forall p p', eval p p' -> p.(Language.prog) = p'.(Language.prog).
+Proof.
+Admitted.
+
+Lemma read_instr_functional : forall p i j,
+  Language.read_instr p i -> Language.read_instr p j -> i <> j -> False.
+Proof.
+  intros.
+  inversion H0.
+  inversion H.
+  assert ((Language.read_instr' (Language.prog p) (Language.pc p) = 
+             Language.read_instr' (Language.prog p) (Language.pc p))).
+  reflexivity.
+  rewrite <- H2 in H1.
+  rewrite <- H3 in H1.
+  contradiction.
+Qed.
+
 Theorem sequence_comp_ptrinc :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.PtrInc ->
-              eval' q q'.
+              Common.plus eval' q q'.
 Proof.
-Admitted.
+  intros.
+  apply Common.t_base.
+  assert (Assembly.read_instr q (Assembly.Add 1)).
+  apply (comp_newstate' p q Language.PtrInc).
+  assumption.
+  assumption.
+  assert (Assembly.read_instr q' (first_comp_instr
+                                 (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).
+  apply (comp_newstate' p' q').
+  assumption.
+  apply Language.ri.
+  reflexivity.
+  unfold eval'.
+  apply (Assembly.add q) with (n := 1).
+  - assumption.
+  - assert (Assembly.pc q = (Compiler.new_pc p.(Language.prog) p.(Language.pc))).
+    inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Assembly.pc q' = (Compiler.new_pc p'.(Language.prog) p'.(Language.pc))).
+    inversion H1.
+    unfold Compiler.compile' in H7.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Compiler.new_pc (Language.prog p') (Language.pc p') =
+            Compiler.new_pc (Language.prog p) (Language.pc p) + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc))).
+    inversion H2.
+    assert (emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)) = 1).
+    rewrite H7.
+    simpl.
+    reflexivity.
+    apply offset_newpc.
+    assumption.
+    rewrite H7 in H6.
+    inversion H2.
+    rewrite H8 in H6.
+    simpl in H6.
+    rewrite <- H5 in H6.
+    rewrite H6.
+    reflexivity.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    f_equal.
+    f_equal.
+    apply constant_code.
+    assumption.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    assert (Language.mem p' = Language.mem p).
+    inversion H0.
+    rewrite H12. reflexivity.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    rewrite <- H8.
+    inversion H1.
+    inversion H10.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+  - assert (Assembly.b q = 0).
+    inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Assembly.b q' = 0).
+    inversion H1.
+    inversion H7.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    rewrite H5, H6.
+    reflexivity.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    inversion H0.
+    rewrite H12.
+    reflexivity.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+Qed.
 Theorem sequence_comp_ptrdec :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.PtrDec ->
-              eval' q q'.
+              Common.plus eval' q q'.
 Proof.
-Admitted.
+Admitted. (* same idea as previous *)
 Theorem sequence_comp_inc :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Inc ->
-              exists q'1, (eval' q q'1) /\
-              exists q'2, (eval' q'1 q'2) /\
-              exists q'3, (eval' q'2 q'3) /\
-              exists q'4, (eval' q'3 q'4) /\
-              exists q'5, (eval' q'4 q'5) /\
-              exists q'6, (eval' q'5 q'6) /\
-              eval' q'6 q'.
+              Common.plus eval' q q'.
 Proof.
 Admitted.
 Theorem sequence_comp_dec :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Dec ->
-              exists q'1, (eval' q q'1) /\
-              exists q'2, (eval' q'1 q'2) /\
-              exists q'3, (eval' q'2 q'3) /\
-              exists q'4, (eval' q'3 q'4) /\
-              exists q'5, (eval' q'4 q'5) /\
-              exists q'6, (eval' q'5 q'6) /\
-              eval' q'6 q'.
+              Common.plus eval' q q'.
 Proof.
 Admitted.
 Theorem sequence_comp_jump :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Jump ->
-              exists q'1, (eval' q q'1) /\
-              exists q'2, (eval' q'1 q'2) /\
-              eval' q'2 q'.
+              Common.plus eval' q q'.
 Proof.
 Admitted.
 Theorem sequence_comp_ret :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Ret ->
-              exists q'1, (eval' q q'1) /\
-              exists q'2, (eval' q'1 q'2) /\
-              eval' q'2 q'.
+              Common.plus eval' q q'.
 Proof.
 Admitted.
 Theorem comp_correct : 
