@@ -2,7 +2,7 @@
 
 - Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 - This is an attempt to formalise the semantic conservation properties for compilers described in Xavier Leroy's paper.
-- This repository will try to use them to formally verify a compiler, defined in [src/Compiler.v](src/Compiler.v) between transforming expressions between 2 toy languages: [src/Verification.v](src/Verification.v)
+- This repository will try to use them to formally verify a compiler, defined in [src/Compiler.v](src/Compiler.v), transforming expressions between 2 toy languages.
 
 ## Semantics
 
