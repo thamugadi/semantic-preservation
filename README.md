@@ -14,3 +14,7 @@ Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 
 - The aim of Leroy's paper is to describe how a source program S and a target program C retain the same semantics if the compilation process, (not done yet) defined in [src/Compiler.v](src/Compiler.v), succeeds. 
 - Several relations are defined in his paper to express semantic preservation. In [src/Simulation.v](src/Simulation.v) are included the definitions to construct the lockstep, "plus", "option" and "star" simulation relations described in p. 16.
+
+## Proof of 'plus' simulation
+
+- The proof ([src/Verification.v](src/Verification.v)) is still incomplete.
