@@ -18,4 +18,4 @@ Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 ## Proof of 'plus' simulation
 
 - The proof ([src/Verification.v](src/Verification.v)) is still incomplete.
-+ Lemmas with sufficient conditions for eval'+ to hold between two target states would be helpful.
+- Lemmas with sufficient conditions for eval'+ to hold between two target states would be helpful.
