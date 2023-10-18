@@ -284,7 +284,144 @@ Theorem sequence_comp_ptrdec :
               Language.read_instr p Language.PtrDec ->
               Common.plus eval' q q'.
 Proof.
-Admitted. (* same idea as previous *)
+  intros.
+  apply Common.t_base.
+  assert (Assembly.read_instr q (Assembly.Sub 1)).
+  apply (comp_newstate' p q Language.PtrDec).
+  assumption.
+  assumption.
+  assert (Assembly.read_instr q' (first_comp_instr
+                                 (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).
+  apply (comp_newstate' p' q').
+  assumption.
+  apply Language.ri.
+  reflexivity.
+  unfold eval'.
+  apply (Assembly.sub q) with (n := 1).
+  - assumption.
+  - assert (Assembly.pc q = (Compiler.new_pc p.(Language.prog) p.(Language.pc))).
+    inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Assembly.pc q' = (Compiler.new_pc p'.(Language.prog) p'.(Language.pc))).
+    inversion H1.
+    unfold Compiler.compile' in H7.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Compiler.new_pc (Language.prog p') (Language.pc p') =
+            Compiler.new_pc (Language.prog p) (Language.pc p) + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc))).
+    inversion H2.
+    assert (emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)) = 1).
+    rewrite H7.
+    simpl.
+    reflexivity.
+    apply offset_newpc.
+    assumption.
+    rewrite H7 in H6.
+    inversion H2.
+    rewrite H8 in H6.
+    simpl in H6.
+    rewrite <- H5 in H6.
+    rewrite H6.
+    reflexivity.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    f_equal.
+    f_equal.
+    apply constant_code.
+    assumption.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    assert (Language.mem p' = Language.mem p).
+    inversion H0.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    rewrite H12.
+    reflexivity.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H8 H2).
+    discriminate.
+    rewrite <- H8.
+    inversion H1.
+    inversion H10.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+  - assert (Assembly.b q = 0).
+    inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    assert (Assembly.b q' = 0).
+    inversion H1.
+    inversion H7.
+    unfold Compiler.compile'.
+    simpl.
+    reflexivity.
+    rewrite H5, H6.
+    reflexivity.
+  - inversion H.
+    inversion H6.
+    unfold Compiler.compile'.
+    simpl.
+    inversion H1.
+    inversion H9.
+    unfold Compiler.compile'.
+    simpl.
+    inversion H0.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    rewrite H12.
+    reflexivity.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+    exfalso.
+    apply (read_instr_functional _ _ _ H11 H2).
+    discriminate.
+Qed.
 Theorem sequence_comp_inc :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Inc ->
@@ -309,8 +446,9 @@ Theorem sequence_comp_ret :
               Common.plus eval' q q'.
 Proof.
 Admitted.
-Theorem comp_correct : 
-  Simulation.plus_forward_sim Compiler.compile eval eval'.
+
+(* the main theorem: *)
+Theorem comp_correct : Simulation.plus_forward_sim Compiler.compile eval eval'.
 Proof.
   unfold Simulation.plus_forward_sim, eval, eval'.
   intros p q compileH p' evalH.
