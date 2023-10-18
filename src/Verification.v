@@ -12,13 +12,29 @@ Module Verification.
 Definition eval := Language.semantics.
 Definition eval' := Assembly.semantics.
 
+Theorem constant_code : forall p p', eval p p' -> p.(Language.prog) = p'.(Language.prog).
+Proof.
+  intros.
+  induction H; assumption.
+Qed.
+
 Theorem match_preserve : 
   forall p p', Language.semantics p p' ->
                Compiler.matched (Language.prog p) ->
                Compiler.matched (Language.prog p').
 Proof.
-Admitted.
-
+  intros.
+  assert (p.(Language.prog) = p'.(Language.prog)).
+  - apply constant_code.
+    assumption.
+  - destruct p, p'.
+    simpl in H1.
+    simpl.
+    simpl in H0.
+    rewrite H1 in H0.
+    assumption.
+Qed.
+  
 Definition first_comp_instr (i : Language.instr) : Assembly.instr :=
   match i with
   | Language.PtrInc => Assembly.Add 1
@@ -71,10 +87,6 @@ Theorem offset_newpc :
   eval p p' -> Compiler.new_pc (Language.prog p') (Language.pc p') =
                Compiler.new_pc (Language.prog p) (Language.pc p) 
                + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)).
-Proof.
-Admitted.
-
-Theorem constant_code : forall p p', eval p p' -> p.(Language.prog) = p'.(Language.prog).
 Proof.
 Admitted.
 
