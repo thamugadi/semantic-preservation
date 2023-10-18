@@ -50,8 +50,7 @@ Theorem first_instr_comp : forall p q i, Compiler.compile p q ->
                            Language.read_instr p i ->
                            Assembly.read_instr q (first_comp_instr i).
 Proof.
-Admitted.
-
+Admitted. (* to be done.*)
 Theorem comp_newstate :
   forall p q, Compiler.compile p q ->
               q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
@@ -61,7 +60,25 @@ Theorem comp_newstate :
               Assembly.read_instr q (first_comp_instr
               (Language.read_instr' p.(Language.prog) p.(Language.pc))).
 Proof.
-Admitted.
+  intros.
+  inversion H.
+  inversion H1.
+  unfold Compiler.compile'.
+  simpl.
+  split. reflexivity.
+  split. reflexivity.
+  split. reflexivity.
+  split. reflexivity.
+  apply first_instr_comp with (p := p).
+  destruct q.
+  inversion H2.
+  apply Compiler.comp_r.
+  assumption.
+  unfold Compiler.compile'.
+  reflexivity.
+  apply Language.ri.
+  reflexivity.
+Qed.
 Theorem comp_newstate' :
   forall p q i, Compiler.compile p q -> Language.read_instr p i ->
               q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
@@ -70,7 +87,23 @@ Theorem comp_newstate' :
               q.(Assembly.b) = 0 /\
               Assembly.read_instr q (first_comp_instr i).
 Proof.
-Admitted.
+  intros.
+  inversion H.
+  inversion H2.
+  unfold Compiler.compile'.
+  simpl.
+  split. reflexivity.
+  split. reflexivity.
+  split. reflexivity.
+  split. reflexivity.
+  inversion H0.
+  rewrite <- H4.
+  apply comp_newstate.
+  apply Compiler.comp_r.
+  assumption.
+  unfold Compiler.compile'.
+  reflexivity.
+Qed.
 Definition emitted_instr (i : Language.instr) : nat :=
   match i with
   | Language.PtrInc => 1
@@ -88,7 +121,7 @@ Theorem offset_newpc :
                Compiler.new_pc (Language.prog p) (Language.pc p) 
                + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)).
 Proof.
-Admitted.
+Admitted. (*to be done*)
 
 Lemma read_instr_functional : forall p i j,
   Language.read_instr p i -> Language.read_instr p j -> i <> j -> False.
