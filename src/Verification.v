@@ -329,8 +329,7 @@ Proof.
     + inversion compileH.
       remember (Compiler.compile' p') as q'.
       
-      (* todo: prove sufficient conditions 
-               for eval'+ q q' to hold, instead of the stronger eval' q q'*)
+      (* todo: prove the 6 conditions for eval'+ q q' to hold'*)
       
       
 Admitted. (* to be done. *)
