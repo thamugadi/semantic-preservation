@@ -39,7 +39,8 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem constant_asm_plus : forall q q', Common.plus eval' q q' -> q.(Assembly.prog) = q'.(Assembly.prog).
+Theorem constant_asm_plus : 
+  forall q q', Common.plus eval' q q' -> q.(Assembly.prog) = q'.(Assembly.prog).
 Proof.
 Admitted.
 
@@ -511,6 +512,17 @@ Proof.
     assumption.
     assumption.
     assumption.
+    rewrite <- H10.
+    assert (Assembly.prog q4 = Assembly.prog q5) by (apply constant_asm'; assumption).
+    assert (Assembly.prog q3 = Assembly.prog q4) by (apply constant_asm'; assumption).
+    assert (Assembly.prog q2 = Assembly.prog q3) by (apply constant_asm'; assumption).
+    assert (Assembly.prog q1 = Assembly.prog q2)  by (apply constant_asm'; assumption).
+    assert (Assembly.prog q = Assembly.prog q1) by (apply constant_asm'; assumption).
+    rewrite H15. rewrite H14. rewrite H13. rewrite H12. rewrite H11.
+    reflexivity.
+  - inversion H1.
+    unfold Compiler.compile' in H11.
+    inversion H8.
     (* unfinished. *)
 Admitted.
 Theorem sequence_comp_dec :
@@ -535,15 +547,14 @@ Admitted.
 (* the main theorem: *)
 Theorem comp_correct : Simulation.plus_forward_sim Compiler.compile eval eval'.
 Proof.
-  unfold Simulation.plus_forward_sim, eval, eval'.
+  unfold Simulation.plus_forward_sim.
   intros p q compileH p' evalH.
   assert (Compiler.matched (Language.prog p')).
   apply match_preserve with (p := p).
-  unfold eval in evalH.
   assumption.
   inversion compileH.
   assumption.
-  induction evalH.
+  inversion evalH.
   - exists (Compiler.compile' p').
     split.
     + apply Compiler.comp_r.
@@ -551,10 +562,14 @@ Proof.
       reflexivity.
     + inversion compileH.
       remember (Compiler.compile' p') as q'.
-      
-      (* todo: prove the 6 conditions for eval'+ q q' to hold'*)
-      
-      
-Admitted. (* to be done. *)
+      apply sequence_comp_ptrinc with (p := p) (p' := p').
+      assumption.
+      assumption.
+      apply Compiler.comp_r.
+      assumption.
+      assumption.
+      assumption.
+(* etc. *)
+Admitted.
 
 End Verification.
