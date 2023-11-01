@@ -39,11 +39,6 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem constant_asm_plus : 
-  forall q q', Common.plus eval' q q' -> q.(Assembly.prog) = q'.(Assembly.prog).
-Proof.
-Admitted.
-
 Theorem match_preserve : 
   forall p p', Language.semantics p p' ->
                Compiler.matched (Language.prog p) ->
@@ -72,12 +67,26 @@ Definition first_comp_instr (i : Language.instr) : Assembly.instr :=
   | Language.Halt => Assembly.Halt
   end.
 
+Theorem first_instr_comp' : 
+  forall p q i x, Compiler.compile p q ->
+  Language.read_instr' p.(Language.prog) x = i ->
+  Assembly.read_instr' q.(Assembly.prog) (Compiler.new_pc p.(Language.prog) x)
+  = (first_comp_instr i).
+Proof.
+
 Theorem first_instr_comp : forall p q i, Compiler.compile p q ->
                            Language.read_instr p i ->
                            Assembly.read_instr q (first_comp_instr i).
 Proof.
+  intros.
+  inversion H.
+  inversion H0.
+  apply Assembly.ri.
+  rewrite H2.
+  rewrite <- H3.
+  generalize (Language.pc p) as x.
+  induction p; intro x; destruct x; unfold first_comp_instr.
 Admitted.
-
 Theorem inc_instr_comp :
   forall p q, Compiler.compile p q -> Language.read_instr p Language.Inc ->
               exists q1 q2 q3 q4 q5,
