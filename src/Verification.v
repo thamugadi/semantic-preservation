@@ -73,7 +73,7 @@ Theorem first_instr_comp' :
   Assembly.read_instr' q.(Assembly.prog) (Compiler.new_pc p.(Language.prog) x)
   = (first_comp_instr i).
 Proof.
-
+Admitted.
 Theorem first_instr_comp : forall p q i, Compiler.compile p q ->
                            Language.read_instr p i ->
                            Assembly.read_instr q (first_comp_instr i).

@@ -17,3 +17,8 @@
 ## Proof of 'plus' simulation
 
 - The proof ([src/Verification.v](src/Verification.v)) is still incomplete.
+
+## TODO:
+
+- Use vectors instead of lists (lists make the proof too complicated to complete)
+- Complete the proof

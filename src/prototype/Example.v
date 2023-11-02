@@ -1,6 +1,7 @@
 Require Import List.
 Require Import Nat.
 Require Import Lia.
+Require Import Classical.
 Import ListNotations.
 
 Inductive instr1 : Type := | Load : instr1 | Halt : instr1.
@@ -12,8 +13,6 @@ Fixpoint compile (p : list instr1) : list instr2 :=
   | Load :: t => Load' :: Load' :: compile t
   | Halt :: t => Halt' :: compile t
   end.
-
-(* todo: option list *)
 
 Fixpoint compile_index' (p : list instr1) (x a b : nat) : option nat :=
   if (a =? x) then Some b else
@@ -40,3 +39,8 @@ Fixpoint index2 (p : list instr2) (x : nat) : option instr2 :=
 
 Definition comp_instr (i : instr1) : instr2 :=
   match i with | Halt => Halt' | Load => Load' end.
+
+Theorem th : forall p x x' i, compile_index p x = Some x' -> index1 p x = Some i ->
+             index2 (compile p) x' = Some (comp_instr i).
+Proof.
+  
