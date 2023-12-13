@@ -1,46 +1,40 @@
 Require Import List.
 Require Import Nat.
 Require Import Lia.
+Require Import Program.Equality.
 Require Import Classical.
 Import ListNotations.
+From Hammer Require Import Tactics.
+From Hammer Require Import Hammer.
 
 Inductive instr1 : Type := | Load : instr1 | Halt : instr1.
 Inductive instr2 : Type := | Load' : instr2 | Halt' : instr2.
-
-Fixpoint compile (p : list instr1) : list instr2 :=
-  match p with
-  | [] => []
-  | Load :: t => Load' :: Load' :: compile t
-  | Halt :: t => Halt' :: compile t
-  end.
+Definition compile (p : list instr1) : list instr2 :=
+  flat_map (fun i => match i with
+                      | Load => [Load'; Load']
+                      | Halt => [Halt']
+                      end) p.
 
 Fixpoint compile_index' (p : list instr1) (x a b : nat) : option nat :=
-  if (a =? x) then Some b else
+  match p, a =? x with
+  | [], _ => None
+  | _, true => Some b
+  | i :: t, _ => compile_index' t x (a+1) (b+(length (compile [i])))
+  end.
+
+Definition compile_index (p : list instr1) (x : nat) : option nat :=
+  compile_index' p x 0 0.
+
+Compute (compile_index [Load;Load;Load] 2).
+
+Fixpoint index {a} (p : list a) (x : nat) : option a :=
   match p with
   | [] => None
-  | Load :: t => compile_index' t x (a+1) (b+2)
-  | Halt :: t => compile_index' t x (a+1) (b+1)
+  | i :: t => if x =? 0 then Some i else index t (pred x)
   end.
 
-Definition compile_index (p : list instr1) (x : nat) : option nat := compile_index' p x 0 0.
+Definition comp_instr (i : instr1) : instr2 := match i with | Halt => Halt' | Load => Load' end.
 
-Fixpoint index1 (p : list instr1) (x : nat) : option instr1 :=
-  match p, x with
-  | [], _ => None
-  | i :: _, 0 => Some i
-  | _ :: t, S x' => index1 t x'
-  end.
-Fixpoint index2 (p : list instr2) (x : nat) : option instr2 :=
-  match p, x with
-  | [], _ => None
-  | i :: _, 0 => Some i
-  | _ :: t, S x' => index2 t x'
-  end.
-
-Definition comp_instr (i : instr1) : instr2 :=
-  match i with | Halt => Halt' | Load => Load' end.
-
-Theorem th : forall p x x' i, compile_index p x = Some x' -> index1 p x = Some i ->
-             index2 (compile p) x' = Some (comp_instr i).
+Theorem thg : forall p x x' i a b, compile_index' p x a b = Some x' -> index p x = Some i -> index (compile p) x' = Some (comp_instr i).
 Proof.
-  
+Admitted.

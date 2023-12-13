@@ -20,5 +20,4 @@
 
 ## TODO:
 
-- Use vectors instead of lists (lists make the proof too complicated to complete)
 - Complete the proof

@@ -8,6 +8,13 @@ Require Import Lia.
 Import ListNotations.
 Require Import PeanoNat.
 Import Nat.
+
+Require Import Coq.Program.Equality.
+
+From Hammer Require Import Hammer.
+From Hammer Require Import Tactics.
+From Hammer Require Import Reflect.
+
 Module Verification.
 Definition eval := Language.semantics.
 Definition eval' := Assembly.semantics.
@@ -67,6 +74,7 @@ Definition first_comp_instr (i : Language.instr) : Assembly.instr :=
   | Language.Halt => Assembly.Halt
   end.
 
+(* unnecessary
 Theorem first_instr_comp' : 
   forall p q i x, Compiler.compile p q ->
   Language.read_instr' p.(Language.prog) x = i ->
@@ -74,6 +82,10 @@ Theorem first_instr_comp' :
   = (first_comp_instr i).
 Proof.
 Admitted.
+*)
+
+
+(* A minimal version is available in prototype/Example.v *)
 Theorem first_instr_comp : forall p q i, Compiler.compile p q ->
                            Language.read_instr p i ->
                            Assembly.read_instr q (first_comp_instr i).
@@ -86,32 +98,6 @@ Proof.
   rewrite <- H3.
   generalize (Language.pc p) as x.
   induction p; intro x; destruct x; unfold first_comp_instr.
-Admitted.
-Theorem inc_instr_comp :
-  forall p q, Compiler.compile p q -> Language.read_instr p Language.Inc ->
-              exists q1 q2 q3 q4 q5,
-              Assembly.read_instr q5 Assembly.Swap /\
-              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5.
-Proof.
-Admitted.
-
-Theorem dec_instr_comp :
-  forall p q, Compiler.compile p q -> Language.read_instr p Language.Dec ->
-              exists q1 q2 q3 q4 q5,
-              Assembly.read_instr q5 Assembly.Swap /\
-              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5.
-Proof.
-Admitted.
-
-Theorem jump_instr_comp :
-  forall p q, Compiler.compile p q -> Language.read_instr p Language.Jump ->
-              exists n q1, Assembly.read_instr q1 (Assembly.Jump n) /\ eval' q q1.
-Proof.
-Admitted.
-Theorem ret_instr_comp :
-  forall p q, Compiler.compile p q -> Language.read_instr p Language.Ret ->
-              exists n q1, Assembly.read_instr q1 (Assembly.Jump n) /\ eval' q q1.
-Proof.
 Admitted.
 
 Theorem comp_newstate :
@@ -177,6 +163,14 @@ Definition emitted_instr (i : Language.instr) : nat :=
   | Language.Ret => 2
   | Language.Halt => 1
   end.
+Compute (Compiler.new_pc [Language.PtrInc] 1 ).
+
+Theorem offset_newpc_lm :
+  forall p p',
+  eval p p' -> Compiler.new_pc (Language.prog p') (Language.pc p') =
+               Compiler.new_pc (Language.prog p) (Language.pc p) 
+               + length (Compiler.compile'' [Language.read_instr' (Language.prog p) (Language.pc p)]).
+Admitted.
 
 Theorem offset_newpc :
   forall p p',
@@ -184,8 +178,18 @@ Theorem offset_newpc :
                Compiler.new_pc (Language.prog p) (Language.pc p) 
                + emitted_instr (Language.read_instr' p.(Language.prog) p.(Language.pc)).
 Proof.
-Admitted. (*to be done*)
-
+  intros.
+  assert (Compiler.new_pc (Language.prog p') (Language.pc p') =
+               Compiler.new_pc (Language.prog p) (Language.pc p) 
+               + length (Compiler.compile'' [Language.read_instr' (Language.prog p) (Language.pc p)])).
+  apply offset_newpc_lm. assumption.
+  destruct (length
+       (Compiler.compile''
+          [Language.read_instr' (Language.prog p)
+             (Language.pc p)])) eqn:HA.
+  ssimpl.
+  ssimpl.
+Qed.
 Lemma read_instr_functional : forall p i j,
   Language.read_instr p i -> Language.read_instr p j -> i <> j -> False.
 Proof.
@@ -199,6 +203,51 @@ Proof.
   rewrite <- H3 in H1.
   contradiction.
 Qed.
+
+Theorem inc_instr_comp :
+  forall p q p', Compiler.compile p q -> eval p p' ->
+              Language.read_instr p Language.Inc ->
+              exists q1 q2 q3 q4 q5,
+              Assembly.read_instr q1 Assembly.Load /\
+              Assembly.read_instr q2 (Assembly.Add 1) /\
+              Assembly.read_instr q3 Assembly.Store /\
+              Assembly.read_instr q4 Assembly.Zero /\
+              Assembly.read_instr q5 Assembly.Swap /\
+              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5.
+Proof.
+  intros.
+  assert (Assembly.read_instr q (first_comp_instr Language.Inc)).
+  apply first_instr_comp with (p := p). assumption. assumption.
+  simpl in H2.
+Admitted.
+
+Theorem dec_instr_comp :
+  forall p q p', Compiler.compile p q -> eval p p' ->
+              Language.read_instr p Language.Dec ->
+              exists q1 q2 q3 q4 q5,
+              Assembly.read_instr q1 Assembly.Load /\
+              Assembly.read_instr q2 (Assembly.Sub 1) /\
+              Assembly.read_instr q3 Assembly.Store /\
+              Assembly.read_instr q4 Assembly.Zero /\
+              Assembly.read_instr q5 Assembly.Swap /\
+              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5.
+Proof.
+  intros.
+  assert (Assembly.read_instr q (first_comp_instr Language.Dec)).
+  apply first_instr_comp with (p := p). assumption. assumption.
+  simpl in H2.
+Admitted.
+
+Theorem jump_instr_comp :
+  forall p q p', Compiler.compile p q -> eval p p' -> 
+                 Language.read_instr p Language.Jump ->
+                 exists n q1, Assembly.read_instr q1 (Assembly.Jump n) /\ eval' q q1.
+Proof.
+  intros.
+  assert (Assembly.read_instr q (first_comp_instr Language.Jump)).
+  apply first_instr_comp with (p := p). assumption. assumption.
+  simpl in H2.
+Admitted.
 
 Theorem sequence_comp_ptrinc :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
@@ -491,48 +540,8 @@ Theorem sequence_comp_inc :
               Common.plus eval' q q'.
 Proof.
   intros.
-  assert (exists q1 q2 q3 q4 q5,
-              Assembly.read_instr q5 Assembly.Swap /\
-              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5).
-  apply inc_instr_comp with (p := p).
-  assumption.
-  assumption.
-  destruct H3 as [q1]. destruct H3 as [q2]. destruct H3 as [q3].
-  destruct H3 as [q4]. destruct H3 as [q5].
-  destruct H3. destruct H4. destruct H5.
-  destruct H6. destruct H7.
-  apply Common.t_trans with (y := q1). assumption.
-  apply Common.t_trans with (y := q2). assumption.
-  apply Common.t_trans with (y := q3). assumption.
-  apply Common.t_trans with (y := q4). assumption.
-  apply Common.t_trans with (y := q5). assumption.
-  apply Common.t_base.
-  assert (Assembly.read_instr q' (first_comp_instr
-                                 (Language.read_instr' p'.(Language.prog) p'.(Language.pc)))).
-  apply (comp_newstate' p' q').
-  assumption.
-  apply Language.ri.
-  reflexivity.
-  unfold eval'.
-  apply (Assembly.swap).
-  assumption.
-  - assert (Assembly.prog q = Assembly.prog q').
-    apply constant_asm with (p := p) (p' := p').
-    assumption.
-    assumption.
-    assumption.
-    rewrite <- H10.
-    assert (Assembly.prog q4 = Assembly.prog q5) by (apply constant_asm'; assumption).
-    assert (Assembly.prog q3 = Assembly.prog q4) by (apply constant_asm'; assumption).
-    assert (Assembly.prog q2 = Assembly.prog q3) by (apply constant_asm'; assumption).
-    assert (Assembly.prog q1 = Assembly.prog q2)  by (apply constant_asm'; assumption).
-    assert (Assembly.prog q = Assembly.prog q1) by (apply constant_asm'; assumption).
-    rewrite H15. rewrite H14. rewrite H13. rewrite H12. rewrite H11.
-    reflexivity.
-  - inversion H1.
-    unfold Compiler.compile' in H11.
-    inversion H8.
-    (* unfinished. *)
+  assert (Assembly.read_instr q (Assembly.Swap)).
+  apply (comp_newstate' p q Language.Inc); assumption.
 Admitted.
 Theorem sequence_comp_dec :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
@@ -541,44 +550,39 @@ Theorem sequence_comp_dec :
 Proof.
 Admitted.
 Theorem sequence_comp_jump :
-  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
-              Language.read_instr p Language.Jump ->
-              Common.plus eval' q q'.
-Proof.
-Admitted.
-Theorem sequence_comp_ret :
-  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
-              Language.read_instr p Language.Ret ->
-              Common.plus eval' q q'.
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' -> Language.read_instr p Language.Jump -> Common.plus eval' q q'.
 Proof.
 Admitted.
 
+(*Theorem sequence_comp_ptrinc :
+  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
+              Language.read_instr p Language.PtrInc ->
+              Common.plus eval' q q'.*)
+
 (* the main theorem: *)
+
 Theorem comp_correct : Simulation.plus_forward_sim Compiler.compile eval eval'.
 Proof.
   unfold Simulation.plus_forward_sim.
   intros p q compileH p' evalH.
-  assert (Compiler.matched (Language.prog p')).
-  apply match_preserve with (p := p).
-  assumption.
-  inversion compileH.
-  assumption.
-  inversion evalH.
-  - exists (Compiler.compile' p').
-    split.
-    + apply Compiler.comp_r.
-      assumption.
-      reflexivity.
-    + inversion compileH.
-      remember (Compiler.compile' p') as q'.
-      apply sequence_comp_ptrinc with (p := p) (p' := p').
-      assumption.
-      assumption.
-      apply Compiler.comp_r.
-      assumption.
-      assumption.
-      assumption.
-(* etc. *)
-Admitted.
+  assert (Compiler.matched (Language.prog p')). ssimpl.
+  inversion evalH; exists (Compiler.compile' p'); (split; try (apply Compiler.comp_r); auto).
+  + apply sequence_comp_ptrinc with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption.
+  + apply sequence_comp_ptrdec with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption. 
+  + apply sequence_comp_inc with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption. 
+  + apply sequence_comp_dec with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption. 
+  + apply sequence_comp_jump with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption.
+  + apply sequence_comp_jump with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption.
+  + apply sequence_comp_jump with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption.
+  + apply sequence_comp_jump with (p := p) (p' := p').
+    assumption. assumption. apply Compiler.comp_r. assumption. reflexivity. assumption.
+Qed.
 
 End Verification.
