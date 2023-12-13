@@ -542,22 +542,87 @@ Proof.
   intros.
   assert (Assembly.read_instr q (Assembly.Swap)).
   apply (comp_newstate' p q Language.Inc); assumption.
+  assert (exists q1 q2 q3 q4 q5,
+              Assembly.read_instr q1 Assembly.Load /\
+              Assembly.read_instr q2 (Assembly.Add 1) /\
+              Assembly.read_instr q3 Assembly.Store /\
+              Assembly.read_instr q4 Assembly.Zero /\
+              Assembly.read_instr q5 Assembly.Swap /\
+              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5).
+  apply inc_instr_comp with (p := p) (p' := p'); assumption.
+  
+  repeat (destruct H4).
+  rename x into q1; rename x0 into q2; rename x1 into q3; rename x2 into q4; rename x3 into q5.
+  destruct H5.
+  destruct H5.
+  destruct H6.
+  destruct H7 .
+  apply (Common.t_trans) with (y := q1).
+  admit.
+  apply (Common.t_trans) with (y := q2).
+  admit.
+  apply (Common.t_trans) with (y := q3).
+  admit.
+  apply (Common.t_trans) with (y := q4).
+  admit.
+  apply (Common.t_trans) with (y := q5).
+  admit.
+  apply (Common.t_base).
+  admit.
 Admitted.
 Theorem sequence_comp_dec :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
               Language.read_instr p Language.Dec ->
               Common.plus eval' q q'.
 Proof.
+  intros.
+  assert (Assembly.read_instr q (Assembly.Swap)).
+  apply (comp_newstate' p q Language.Dec); assumption.
+  assert (exists q1 q2 q3 q4 q5,
+              Assembly.read_instr q1 Assembly.Load /\
+              Assembly.read_instr q2 (Assembly.Sub 1) /\
+              Assembly.read_instr q3 Assembly.Store /\
+              Assembly.read_instr q4 Assembly.Zero /\
+              Assembly.read_instr q5 Assembly.Swap /\
+              eval' q q1 /\ eval' q1 q2 /\ eval' q2 q3 /\ eval' q3 q4 /\ eval' q4 q5).
+  apply dec_instr_comp with (p := p) (p' := p'); assumption.
+  
+  repeat (destruct H4).
+  rename x into q1; rename x0 into q2; rename x1 into q3; rename x2 into q4; rename x3 into q5.
+  destruct H5.
+  destruct H5.
+  destruct H6.
+  destruct H7 .
+  apply (Common.t_trans) with (y := q1).
+  admit.
+  apply (Common.t_trans) with (y := q2).
+  admit.
+  apply (Common.t_trans) with (y := q3).
+  admit.
+  apply (Common.t_trans) with (y := q4).
+  admit.
+  apply (Common.t_trans) with (y := q5).
+  admit.
+  apply (Common.t_base).
+  admit.
 Admitted.
 Theorem sequence_comp_jump :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' -> Language.read_instr p Language.Jump -> Common.plus eval' q q'.
 Proof.
-Admitted.
+  intros.
+  assert (Assembly.read_instr q (Assembly.Skip)).
+  apply (comp_newstate' p q Language.Jump); assumption.
+  assert (exists n q1, Assembly.read_instr q1 (Assembly.Jump n) /\ eval' q q1).
+  apply jump_instr_comp with (p := p) (p' := p'); assumption.
+  
+  repeat (destruct H4).
+  rename x into n; rename x0 into q1.
 
-(*Theorem sequence_comp_ptrinc :
-  forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
-              Language.read_instr p Language.PtrInc ->
-              Common.plus eval' q q'.*)
+  apply (Common.t_trans) with (y := q1).
+  admit.
+  apply (Common.t_base).
+  admit.
+Admitted.
 
 (* the main theorem: *)
 
