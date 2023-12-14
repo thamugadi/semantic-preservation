@@ -102,33 +102,6 @@ Proof.
   induction p; intro x; destruct x; unfold first_comp_instr.
 Admitted.
 
-Theorem inc_instr_comp_list : forall p q, Compiler.compile p q ->
-                              Language.read_instr p Language.Inc ->
-                              exists q0 q1 q2 q3 q4 q5,
-                              Assembly.read_instr q0 Assembly.Swap /\
-                              Assembly.read_instr q1 Assembly.Load /\
-                              Assembly.read_instr q2 (Assembly.Add 1) /\
-                              Assembly.read_instr q3 Assembly.Store /\
-                              Assembly.read_instr q4 Assembly.Zero /\
-                              Assembly.read_instr q5 Assembly.Swap.
-Admitted.
-Theorem dec_instr_comp_list : forall p q, Compiler.compile p q ->
-                              Language.read_instr p Language.Dec ->
-                              exists q0 q1 q2 q3 q4 q5,
-                              Assembly.read_instr q0 Assembly.Swap /\
-                              Assembly.read_instr q1 Assembly.Load /\
-                              Assembly.read_instr q2 (Assembly.Sub 1) /\
-                              Assembly.read_instr q3 Assembly.Store /\
-                              Assembly.read_instr q4 Assembly.Zero /\
-                              Assembly.read_instr q5 Assembly.Swap.
-Admitted.
-Theorem jump_instr_comp_list {n} : forall p q, Compiler.compile p q ->
-                              Language.read_instr p Language.Inc ->
-                              exists q0 q1,
-                              Assembly.read_instr q0 Assembly.Skip /\
-                              Assembly.read_instr q1 (Assembly.Jump n).
-Admitted.
-
 Theorem comp_newstate :
   forall p q, Compiler.compile p q ->
               q.(Assembly.pc) = Compiler.new_pc (p.(Language.prog)) (p.(Language.pc)) /\
@@ -249,11 +222,25 @@ Proof.
   apply first_instr_comp with (p := p). assumption. assumption.
   simpl in H2.
   inversion H.
-  
-  (* exists ...
-     exists ...
-     split
-   *)
+  assert (exists q0 q1 q2 q3 q4 q5,
+                              Assembly.read_instr q0 Assembly.Swap /\
+                              Assembly.read_instr q1 Assembly.Load /\
+                              Assembly.read_instr q2 (Assembly.Add 1) /\
+                              Assembly.read_instr q3 Assembly.Store /\
+                              Assembly.read_instr q4 Assembly.Zero /\
+                              Assembly.read_instr q5 Assembly.Swap).
+  admit; assumption.
+  destruct H5. destruct H5. destruct H5. destruct H5. destruct H5.
+  destruct H5.
+  exists x0. exists x1. exists x2. exists x3. exists x4.
+  destruct H5. destruct H6. destruct H7.
+  destruct H8. destruct H9.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  clear H5. clear x.
 Admitted.
 
 Theorem dec_instr_comp :
@@ -271,6 +258,26 @@ Proof.
   assert (Assembly.read_instr q (first_comp_instr Language.Dec)).
   apply first_instr_comp with (p := p). assumption. assumption.
   simpl in H2.
+  inversion H.
+  assert (exists q0 q1 q2 q3 q4 q5,
+                              Assembly.read_instr q0 Assembly.Swap /\
+                              Assembly.read_instr q1 Assembly.Load /\
+                              Assembly.read_instr q2 (Assembly.Sub 1) /\
+                              Assembly.read_instr q3 Assembly.Store /\
+                              Assembly.read_instr q4 Assembly.Zero /\
+                              Assembly.read_instr q5 Assembly.Swap).
+  admit; assumption.
+  destruct H5. destruct H5. destruct H5. destruct H5. destruct H5.
+  destruct H5.
+  exists x0. exists x1. exists x2. exists x3. exists x4.
+  destruct H5. destruct H6. destruct H7.
+  destruct H8. destruct H9.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  split. assumption.
+  clear H5. clear x.
 Admitted.
 
 Theorem jump_instr_comp :
@@ -278,10 +285,6 @@ Theorem jump_instr_comp :
                  Language.read_instr p Language.Jump ->
                  (exists n q1, Assembly.read_instr q1 (Assembly.Jump n) /\ eval' q q1).
 Proof.
-  intros.
-  assert (Assembly.read_instr q (first_comp_instr Language.Jump)).
-  apply first_instr_comp with (p := p). assumption. assumption.
-  simpl in H2.
 Admitted.
 
 Theorem sequence_comp_ptrinc :
