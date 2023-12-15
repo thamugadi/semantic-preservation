@@ -81,11 +81,11 @@ Inductive semantics (p : state) (p' : state) : Prop :=
                    p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                    length p.(mem) > p.(ptr) -> ~ (read_mem p 0) ->
                    p.(pc) + 1 = p'.(pc) -> semantics p p'
-  | ret_z :  read_instr p Jump -> p.(ptr) = p'.(ptr) ->
+  | ret_z :  read_instr p Ret -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> read_mem p 0 ->
                   semantics p p'
-  | ret_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
+  | ret_nz : read_instr p Ret -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   length p.(mem) > p.(ptr) -> ~ (read_mem p 0) ->
                   p.(pc) + 1 = p'.(pc) -> semantics p p'.
