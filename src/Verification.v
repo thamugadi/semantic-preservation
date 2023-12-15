@@ -614,7 +614,30 @@ Proof.
   apply (Common.t_trans) with (y := q5).
   assumption.
   apply (Common.t_base).
-  apply Assembly.swap; admit.
+  apply Assembly.swap.
+  assumption.
+  assert (Assembly.prog q4 = Assembly.prog q5).
+  inversion H13; assumption.
+  assert (Assembly.prog q3 = Assembly.prog q4).
+  inversion H12; assumption.
+  assert (Assembly.prog q2 = Assembly.prog q3).
+  inversion H11; assumption.
+  assert (Assembly.prog q1 = Assembly.prog q2).
+  inversion H10; assumption.
+  assert (Assembly.prog q = Assembly.prog q1).
+  inversion H9; assumption.
+  rewrite <- H14. rewrite <- H15. rewrite <- H16. rewrite <- H17.
+  rewrite <- H18.
+  inversion H.
+  inversion H20.
+  inversion H1.
+  inversion H23.
+  unfold Compiler.compile'.
+  simpl.
+  f_equal.
+  f_equal.
+  apply constant_code.
+  assumption.
 Admitted.
 Theorem sequence_comp_dec :
   forall p p' q q', Compiler.compile p q -> eval p p' -> Compiler.compile p' q' ->
