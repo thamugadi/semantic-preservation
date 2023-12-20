@@ -1,7 +1,8 @@
 Require Import Common.
 Require Import Language.
 Require Import Assembly.
-
+From Hammer Require Import Hammer.
+From Hammer Require Import Tactics.
 Require Import Vector.
 Import Vector.VectorNotations.
 Require Import Program.Equality.
@@ -147,8 +148,43 @@ Fixpoint link_jump' {n ln ln'} (p : Assembly.program n)
 Definition link_jump {n} (p : Assembly.program n) : (Assembly.program n) :=
   link_jump' p (j_indexes p) (r_indexes p).
 
-Definition link_ret {n} (p : Assembly.program n) : (Assembly.program n).
-Admitted. (* todo *)
+Check pred.
+Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
+Proof.
+  destruct x eqn:H1.
+  - auto with *.
+  - exact Fin.F1.
+Defined.
+
+Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
+  match f in Fin.t n return Fin.t (S n) with
+  | Fin.F1 => Fin.F1
+  | Fin.FS f' => Fin.FS (weaken_fin_t f')
+  end.
+
+Definition fint_pred {n} (i : Fin.t n) : Fin.t n :=
+  match i with
+  | Fin.F1 => Fin.F1
+  | Fin.FS f => weaken_fin_t f
+  end.
+
+(*
+Fixpoint link_ret' {n} (p : Assembly.program n) (a : Fin.t n) : (Assembly.program n) :=
+  match a with
+  | Fin.F1 => match p[@a] with
+              | (Assembly.Jump i) => (replace p i (Assembly.Jump a))
+              | _ => p
+              end
+  | _ => match p[@a] with
+         | (Assembly.Jump i) => link_ret' (replace p i (Assembly.Jump a)) (fint_pred a)
+         | _ => link_ret' p (fint_pred a)
+         end
+  end.
+*)
+(*Cannot guess decreasing argument of fix.*)
+
+Fixpoint link_ret {n} (p : Assembly.program n) : Assembly.program n.
+Admitted.
 
 Definition link {n} (l : Assembly.program n) : (Assembly.program n) := link_ret (link_jump l) .
 
@@ -161,12 +197,6 @@ Proof.
     + exact IHn.
 Defined.
 
-Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
-Proof.
-  destruct x eqn:H1.
-  - auto with *.
-  - exact Fin.F1.
-Defined.
 
 Lemma lm1 {n} : forall p, n <> 0 -> comp_len (@Language.prog n p) <> 0.
 Proof.

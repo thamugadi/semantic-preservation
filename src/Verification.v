@@ -8,6 +8,10 @@ Require Import Vector.
 Import Vector.VectorNotations.
 Require Import Program.Equality.
 Require Import PeanoNat.
+
+From Hammer Require Import Hammer.
+From Hammer Require Import Tactics.
+
 Import Nat.
 Module Verification.
 
@@ -95,7 +99,6 @@ Proof.
     assert (Assembly.ac q = Fin.F1);
     assert (Assembly.b q = Language.ptr p); (try (inversion H3; now reflexivity)). (*other global assertions (on q') to be added*)
     + apply Common.t_base.
-      
     (*todo: assert a corollary of the comp_instr lemma*)
 
 Admitted.
