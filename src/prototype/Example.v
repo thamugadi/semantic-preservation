@@ -1,40 +1,62 @@
-Require Import List.
-Require Import Nat.
-Require Import Lia.
+Require Import Vector.
+Import Vector.VectorNotations.
 Require Import Program.Equality.
-Require Import Classical.
-Import ListNotations.
-From Hammer Require Import Tactics.
-From Hammer Require Import Hammer.
 
-Inductive instr1 : Type := | Load : instr1 | Halt : instr1.
-Inductive instr2 : Type := | Load' : instr2 | Halt' : instr2.
-Definition compile (p : list instr1) : list instr2 :=
-  flat_map (fun i => match i with
-                      | Load => [Load'; Load']
-                      | Halt => [Halt']
-                      end) p.
+Inductive instr1 : Type :=
+  | Load : instr1
+  | Halt : instr1.
 
-Fixpoint compile_index' (p : list instr1) (x a b : nat) : option nat :=
-  match p, a =? x with
-  | [], _ => None
-  | _, true => Some b
-  | i :: t, _ => compile_index' t x (a+1) (b+(length (compile [i])))
-  end.
+Inductive instr2 {n} : Type :=
+  | Load' : instr2
+  | Halt' : Fin.t n -> instr2.
 
-Definition compile_index (p : list instr1) (x : nat) : option nat :=
-  compile_index' p x 0 0.
-
-Compute (compile_index [Load;Load;Load] 2).
-
-Fixpoint index {a} (p : list a) (x : nat) : option a :=
-  match p with
-  | [] => None
-  | i :: t => if x =? 0 then Some i else index t (pred x)
-  end.
-
-Definition comp_instr (i : instr1) : instr2 := match i with | Halt => Halt' | Load => Load' end.
-
-Theorem thg : forall p x x' i a b, compile_index' p x a b = Some x' -> index p x = Some i -> index (compile p) x' = Some (comp_instr i).
+Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
 Proof.
+  destruct x eqn:H1.
+  - auto with *.
+  - exact Fin.F1.
+Defined.
+
+Definition comp_instr {n : nat} (HA : n <> 0) x :=
+  match x with
+  | Load => Load'
+  | Halt => Halt' (make_f1 n HA)
+  end.
+
+Fixpoint comp_len {n} (p : t instr1 n) : nat :=
+  match p with
+  | Vector.nil _ => 0
+  | Halt :: xs => 1 + comp_len xs
+  | Load :: xs => 2 + comp_len xs
+  end.
+
+Fixpoint compile' {n n'} (HA : n' <> 0) (p : t instr1 n) : t (@instr2 n') (comp_len p).
+Proof.
+  destruct p.
+  - exact [].
+  - destruct h.
+    + cbn.
+      exact ((Load' :: Load' :: (compile' n n' HA p))).
+    + cbn.
+      exact ((Halt' (make_f1 n' HA)) :: (compile' n n' HA p)).
+Defined.
+
+Lemma lm1 : forall n p, n <> 0 -> @comp_len n p <> 0.
+Proof.
+  intros. destruct p. auto with *. destruct h; cbn; auto with *.
+Qed.
+Definition compile {n : nat} (p : t instr1 n) (HA : n <> 0) : t (@instr2 (comp_len p)) (comp_len p) :=
+  @compile' n (comp_len p) (lm1 n p HA) p.
+
+Fixpoint compile_index {n} (p : t instr1 n) (x : Fin.t n) : Fin.t (comp_len p).
+Proof.
+  destruct x eqn:H1; rewrite (eta p); destruct hd eqn:H2.
+  - apply Fin.F1.
+  - apply Fin.F1.
+  - do 2 apply Fin.FS. apply compile_index. exact t.
+  - do 1 apply Fin.FS, compile_index. exact t.
+Defined.
+
+Theorem th : forall {n} (x : Fin.t n) (p : Vector.t instr1 n) (HA : n <> 0),
+  @comp_instr (comp_len p) (lm1 n p HA) p[@x] = (@compile n p HA)[@compile_index p x].
 Admitted.

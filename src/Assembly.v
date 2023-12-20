@@ -1,86 +1,85 @@
-Require Import List.
-Import ListNotations.
+Require Import Vector.
+Import Vector.VectorNotations.
+Require Import Program.Equality.
 Require Import Common.
-Require Import PeanoNat.
-Import Nat.
 Module Assembly.
 
-Inductive instr : Type :=
+Inductive instr {n} : Type :=
   | Load : instr
   | Store : instr
   | Add : nat -> instr
   | Sub : nat -> instr
-  | Jump : nat -> instr
+  | Jump : (Fin.t n) -> instr
   | Skip : instr
   | Swap : instr
   | Zero : instr
-  | Halt : instr.
+  | Halt : instr
+  | UJUMP : instr (* unlinked *)
+  | URET : instr. (* unlinked *)
 
-Definition program := list instr.
-
-Record state : Type := mkState
+Definition program' (n : nat) (n' : nat) := t (@instr n') n.
+Definition program (n : nat) := program' n n. 
+Record state {n m : nat} : Type := mkState
 { 
-  prog : program;
-  mem : list nat;
-  pc : nat;
-  ac : nat;
-  b : nat;
+  prog : @program n;
+  mem : t nat m;
+  pc : Fin.t n;
+  ac : Fin.t m;
+  b : Fin.t m;
 }.
 
-Fixpoint read_instr' (prog : program) (pc : nat) : instr :=
-  match prog, pc with
-  | [], _ => Halt
-  | i :: _, 0 => i
-  | _ :: t, S pc' => read_instr' t pc'
-  end.
+Definition read_instr' {n} (prog : @program n) (pc : Fin.t n) : instr := prog[@pc].
 
-Inductive read_instr (p : state) (i : instr) : Prop  :=
-  | ri : read_instr' p.(prog) p.(pc) = i -> read_instr p i.
+Inductive read_instr {n m} (p : state) (i : instr) : Prop :=
+  | ri : read_instr' p.(prog n m) p.(pc) = i -> read_instr p i.
 
-Fixpoint read_mem' (m : list nat) (index : nat) : nat :=
-  match m, index with
-  | [], _ => 0
-  | i :: _, 0 => i
-  | _ :: t, S index' => read_mem' t index'
-  end.
+Definition read_mem' {m} (mem : t nat m) (ptr : Fin.t m) : nat := mem[@ptr].
 
-Inductive read_mem (p : state) (n : nat) : Prop  :=
-  | mi : read_mem' p.(mem) p.(ac) = n -> read_mem p n.
+Inductive read_mem {n m} (p : state) (e : nat) : Prop  :=
+  | mi : read_mem' p.(mem n m) p.(ac) = e -> read_mem p e.
 
-Inductive mem_diff (m : list nat) (m' : list nat) (ac : nat) : Prop :=
-  | c_diff : Common.take ac m = Common.take ac m' ->
-               Common.drop (ac+1) m = Common.drop (ac+1) m' ->
-               mem_diff m m' ac.
+Inductive mem_diff {m} (m1 : t nat m) (m2 : t nat m) (x : Fin.t m) : Prop :=
+  | md : (forall i, i <> x -> m2[@i] = m1[@i]) -> mem_diff m1 m2 x. 
+
+Fixpoint to_nat {n} (x : Fin.t n) : nat.
+Proof.
+  destruct x eqn:H.
+  - exact 0.
+  - apply plus.
+    + exact 1.
+    + apply to_nat with (n := n).
+      exact t.
+Defined.
 
 (* Small-step operational semantics for our target language.*)
 
-Inductive semantics (p : state) (p' : state) : Prop :=
-  | load : read_instr p (Load) -> p.(pc) + 1 = p'.(pc) ->
+Inductive semantics {n m} (p : state) (p' : state) : Prop :=
+  | load : read_instr p (Load) ->  to_nat p.(pc n m) + 1 = to_nat p'.(pc)->
              p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
-             p'.(ac) = (read_mem' p.(mem) p.(b)) -> semantics p p'
-  | store: read_instr p (Store) -> p.(pc) + 1 = p'.(pc) ->
+             to_nat p'.(ac) = (read_mem' p.(mem) p.(b)) -> semantics p p'
+  | store: read_instr p (Store) -> to_nat p.(pc) + 1 = to_nat p'.(pc) ->
            p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
-           p.(ac) = read_mem' p'.(mem) p.(ac) -> p.(b) = p'.(b) ->
+           to_nat p.(ac) = read_mem' p'.(mem) p.(ac) -> p.(b) = p'.(b) ->
            mem_diff p.(mem) p'.(mem) p.(b) -> semantics p p'
-  | add : forall n, read_instr p (Add n) -> p.(pc) + 1 = p'.(pc) ->
+  | add : forall n', read_instr p (Add n') -> to_nat p.(pc) + 1 = to_nat p'.(pc) ->
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
-              p'.(ac) = p.(ac) + n -> semantics p p'
-  | sub : forall n, read_instr p (Sub n) -> p.(pc) + 1 = p'.(pc) ->
+              to_nat p'.(ac) = to_nat (p.(ac)) + n' -> semantics p p'
+  | sub : forall n', read_instr p (Sub n') -> to_nat p.(pc) + 1 = to_nat p'.(pc) ->
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
-              p'.(ac) = p.(ac) - n -> semantics p p'
-  | jump : forall n, read_instr p (Jump n) -> p.(prog) = p'.(prog) ->
-               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> p'.(pc) = n ->
+              to_nat p'.(ac) = (to_nat p.(ac)) - n' -> semantics p p'
+  | jump : forall n', read_instr p (Jump n') -> p.(prog) = p'.(prog) ->
+               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> p'.(pc) = n' ->
                p.(b) = p'.(b) -> semantics p p'
   | skipz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
-               read_mem p 0 -> p'.(pc) = p.(pc) + 2 -> semantics p p'
+               read_mem p 0 -> to_nat (p'.(pc)) = to_nat (p.(pc)) + 2 -> semantics p p'
   | skipnz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                 p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
-                ~ (read_mem p 0) -> p'.(pc) = p.(pc) + 1 -> semantics p p'
+                ~ (read_mem p 0) -> to_nat p'.(pc) = (to_nat p.(pc)) + 1 -> semantics p p'
   | swap : read_instr p (Swap) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-           p.(ac) = p'.(b) -> p.(b) = p'.(ac) -> p'.(pc) = p.(pc) + 1 ->
+           p.(ac) = p'.(b) -> p.(b) = p'.(ac) -> to_nat p'.(pc) = (to_nat p.(pc)) + 1 ->
            semantics p p'
   | zero : read_instr p (Zero) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-           p'.(b) = p.(b) -> 0 = p'.(ac) -> p'.(pc) = p.(pc) + 1 ->
+           p'.(b) = p.(b) -> 0 = to_nat p'.(ac) -> to_nat p'.(pc) = (to_nat p.(pc)) + 1 ->
            semantics p p'.
 End Assembly.
