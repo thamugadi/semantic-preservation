@@ -110,8 +110,9 @@ Fixpoint nb_ret' {n n'} (p : Assembly.program' n n') : nat :=
 
 Definition nb_ret {n} (p : Assembly.program n) : nat := @nb_ret' n n p.
 
-Definition vector_zip {n : nat} (A : Type) (v1 v2 : Vector.t A n) : Vector.t (A * A) n :=
-  Vector.map2 (fun x y => (x,y)) v1 v2.
+Definition vector_zip {A B : Type} {n : nat} (v1 : Vector.t A n) (v2 : Vector.t B n) : Vector.t (A * B) n :=
+  Vector.map2 (fun x y => (x, y)) v1 v2.
+
 
 Fixpoint j_indexes' {n n'} (p : Assembly.program' n n') : (Vector.t (Fin.t n) (nb_jump' p)) :=
   match p with
@@ -162,29 +163,25 @@ Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   | Fin.FS f' => Fin.FS (weaken_fin_t f')
   end.
 
-Definition fint_pred {n} (i : Fin.t n) : Fin.t n :=
-  match i with
-  | Fin.F1 => Fin.F1
-  | Fin.FS f => weaken_fin_t f
+Fixpoint make_indexes (n : nat) : Vector.t (Fin.t n) n :=
+  match n with
+  | 0 => []
+  | S i => Fin.F1 :: map Fin.FS (make_indexes i)
   end.
 
-(*
-Fixpoint link_ret' {n} (p : Assembly.program n) (a : Fin.t n) : (Assembly.program n) :=
-  match a with
-  | Fin.F1 => match p[@a] with
-              | (Assembly.Jump i) => (replace p i (Assembly.Jump a))
-              | _ => p
-              end
-  | _ => match p[@a] with
-         | (Assembly.Jump i) => link_ret' (replace p i (Assembly.Jump a)) (fint_pred a)
-         | _ => link_ret' p (fint_pred a)
-         end
+Definition make_ind_v {n A} (v : Vector.t A n) : Vector.t (A*(Fin.t n)) n :=
+  vector_zip v (make_indexes n).
+
+Fixpoint link_ret' {n n'} (p : Vector.t (@Assembly.instr n * (Fin.t n)) n') (p' : Assembly.program n) : Assembly.program n :=
+  match p with
+  | [] => p'
+  | (Assembly.Jump i, ind) :: t => link_ret' t (replace p' i (Assembly.Jump ind))
+  | (_, ind) :: t => link_ret' t p'
   end.
-*)
+
 (*Cannot guess decreasing argument of fix.*)
 
-Fixpoint link_ret {n} (p : Assembly.program n) : Assembly.program n.
-Admitted.
+Definition link_ret {n} (p : Assembly.program n) : Assembly.program n := link_ret' (make_ind_v p) p.
 
 Definition link {n} (l : Assembly.program n) : (Assembly.program n) := link_ret (link_jump l) .
 

@@ -41,6 +41,48 @@ Proof.
       exact ((Halt' (make_f1 n' HA)) :: (compile' n n' HA p)).
 Defined.
 
+Fixpoint to_nat {n} (x : Fin.t n) : nat.
+Proof.
+  destruct x eqn:H.
+  - exact 0.
+  - apply plus.
+    + exact 1.
+    + apply to_nat with (n := n).
+      exact t.
+Defined.
+
+Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
+  match f in Fin.t n return Fin.t (S n) with
+  | Fin.F1 => Fin.F1
+  | Fin.FS f' => Fin.FS (weaken_fin_t f')
+  end.
+Require Import Coq.Program.Wf.
+From Hammer Require Import Tactics.
+Require Import Lia.
+Program Fixpoint fin_t_fact {n} (i : Fin.t n) {measure (to_nat i)} : nat :=
+  match i with
+  | Fin.F1 => 1
+  | Fin.FS t => (to_nat i) * (fin_t_fact (weaken_fin_t t))
+  end.
+Next Obligation.
+  dependent destruction t.
+  - ssimpl.
+  - ssimpl.
+    assert (to_nat (weaken_fin_t t) = to_nat t).
+    + dependent induction t. ssimpl.
+      ssimpl.
+    + rewrite H. lia.
+Qed.
+Check (nat, bool).
+
+Fixpoint make_indexes (n : nat) : Vector.t (Fin.t n) n :=
+  match n with
+  | 0 => []
+  | S i => Fin.F1 :: map Fin.FS (make_indexes i)
+  end.
+
+Compute (make_indexes 8).
+
 Lemma lm1 : forall n p, n <> 0 -> @comp_len n p <> 0.
 Proof.
   intros. destruct p. auto with *. destruct h; cbn; auto with *.
