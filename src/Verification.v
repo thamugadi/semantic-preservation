@@ -27,7 +27,7 @@ Proof.
     reflexivity.
 Defined.
 
-Definition comp_len_f {n p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) 512) : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) 512.
+Definition comp_len_f {n n' p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) n'.
 Proof.
   assert (@Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p')).
   - apply comp_len_eq.
@@ -35,7 +35,7 @@ Proof.
   - rewrite H0.
     exact q.
 Defined.
-Definition comp_len_f' {n p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) 512) : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) 512.
+Definition comp_len_f' {n n' p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) n'.
 Proof.
   assert (@Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p')).
   - apply comp_len_eq.
@@ -97,10 +97,16 @@ Proof.
     assert (Assembly.prog q = (Compiler.compile_link p H0).(Assembly.prog));
     assert (Assembly.to_nat (Assembly.pc q) = Assembly.to_nat (Compiler.compile_index (Language.prog p) (Language.pc p)));
     assert (Assembly.ac q = Fin.F1);
-    assert (Assembly.b q = Language.ptr p); (try (inversion H3; now reflexivity)). (*other global assertions (on q') to be added*)
-    + apply Common.t_base.
-    (*todo: assert a corollary of the comp_instr lemma*)
-
+    assert (Assembly.b q = Language.ptr p); (try (inversion H3; now reflexivity)); (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect; ssimpl).
+    (* 8 proofs for each op sem constructor. to be done: *)
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
 Admitted.
 
 End Verification.
