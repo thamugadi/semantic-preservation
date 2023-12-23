@@ -76,6 +76,10 @@ Lemma comp_instr {n : nat} : forall (x : Fin.t n) (p : Language.program n), Comp
 Proof.
 Admitted. (* to be done (+ another one for linking) *)
 
+Lemma comp_instr2 {n} : forall p i H, @Language.read_instr n p i -> Assembly.read_instr (Compiler.compile_link p H) (Compiler.compile_first i).
+Proof.
+Admitted. (* todo : generalize it for n compiler instructions*)
+
 Theorem comp_correct {n : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
@@ -94,12 +98,10 @@ Proof.
     + reflexivity.
   - destruct E; remember (Compiler.compile_link p' H0) as q';
     inversion H;
-    assert (Assembly.prog q = (Compiler.compile_link p H0).(Assembly.prog));
-    assert (Assembly.to_nat (Assembly.pc q) = Assembly.to_nat (Compiler.compile_index (Language.prog p) (Language.pc p)));
-    assert (Assembly.ac q = Fin.F1);
-    assert (Assembly.b q = Language.ptr p); (try (inversion H3; now reflexivity)); (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect; ssimpl).
+    (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect; ssimpl).
     (* 8 proofs for each op sem constructor. to be done: *)
-    + admit.
+    + apply Common.t_base.
+      apply Assembly.add with (n' := 1).
     + admit.
     + admit.
     + admit.

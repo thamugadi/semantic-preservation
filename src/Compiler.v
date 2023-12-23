@@ -222,7 +222,7 @@ Definition compile_link {n} (p : Language.state (n := n)) (HA : n <> 0) :
   let cpl := compile' p HA in
   Assembly.mkState (comp_len (Language.prog p)) 512 (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
 
-Compute (link [Assembly.UJUMP; Assembly.URET]).
+Compute (link [Assembly.URET; Assembly.Load; Assembly.UJUMP]).
 
 Inductive compile {n}
   (p : Language.state (n := n))
