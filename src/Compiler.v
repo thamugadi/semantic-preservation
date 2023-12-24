@@ -206,7 +206,7 @@ Proof.
 Defined.
 
 
-Lemma lm1 {n} : forall p, n <> 0 -> comp_len (@Language.prog n p) <> 0.
+Lemma lm1 {n m} : forall p, n <> 0 -> comp_len (@Language.prog n m p) <> 0.
 Proof.
   intros.
   destruct p.
@@ -216,27 +216,23 @@ Proof.
   unfold not. intros.
   destruct h; inversion H0.
 Qed.
-Lemma lm2 : 32 <> 0.
-Proof. lia. Qed.
 
-Definition compile' {n}
-  (p : Language.state (n := n)) (HA: n <> 0) : 
-  (Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) :=
+Definition compile' {n m}
+  (p : Language.state (n := n)) (HA: n <> 0) (HA2 : m <> 0) : 
+  (Assembly.state (n := comp_len p.(Language.prog)) (m := m)) :=
   let newlen := comp_len p.(Language.prog) in
   let newpc := compile_index p.(Language.prog) p.(Language.pc) in
   let f1_index := make_f1 (comp_len p.(Language.prog)) (lm1 p HA) in
-  let f1_mem := make_f1 32 lm2 in
-  @Assembly.mkState newlen 32 (compile'' p.(Language.prog)) p.(Language.mem) newpc f1_mem p.(Language.ptr).
+  let f1_mem := make_f1 m HA2 in
+  @Assembly.mkState newlen m (compile'' p.(Language.prog)) p.(Language.mem) newpc f1_mem p.(Language.ptr).
 
-Definition compile_link {n} (p : Language.state (n := n)) (HA : n <> 0) : 
-  (Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) :=
-  let cpl := compile' p HA in
-  Assembly.mkState (comp_len (Language.prog p)) 32 (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
+Definition compile_link {n m} (p : Language.state (n := n)) (HA : n <> 0) (HA2 : m <> 0) : 
+  (Assembly.state (n := comp_len p.(Language.prog)) (m := m)) :=
+  let cpl := compile' p HA HA2 in
+  Assembly.mkState (comp_len (Language.prog p)) m (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
 
-Compute (link [Assembly.URET; Assembly.Load; Assembly.UJUMP]).
-
-Inductive compile {n}
+Inductive compile {n m}
   (p : Language.state (n := n))
-  (q : Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) : Prop :=
-  | comp_r : forall H, matched (p.(Language.prog)) -> q = compile_link p H -> compile p q.
+  (q : Assembly.state (n := comp_len p.(Language.prog)) (m := m)) : Prop :=
+  | comp_r : forall H H1, matched (p.(Language.prog)) -> q = compile_link p H H1 -> compile p q.
 End Compiler.

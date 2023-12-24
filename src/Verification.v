@@ -15,10 +15,10 @@ From Hammer Require Import Tactics.
 Import Nat.
 Module Verification.
 
-Definition eval {n} := @Language.semantics n.
-Definition eval' {n} := @Assembly.semantics n 32.
-
-Lemma comp_len_eq : forall n p p', eval p p' -> @Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p').
+Definition eval {n m} := @Language.semantics n m.
+Definition eval' {n m} := @Assembly.semantics n m.
+Check eval.
+Lemma comp_len_eq : forall n m p p', eval p p' -> @Compiler.comp_len n (@Language.prog n m p) = @Compiler.comp_len n (@Language.prog n m p').
 Proof.
   intros.
   assert (p.(Language.prog) = p'.(Language.prog)).
@@ -27,24 +27,16 @@ Proof.
     reflexivity.
 Defined.
 
-Definition comp_len_f {n n' p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) n'.
+Definition comp_len_f {n n' m p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p')) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p)) n'.
 Proof.
-  assert (@Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p')).
+  assert (@Compiler.comp_len n (@Language.prog n m p) = @Compiler.comp_len n (@Language.prog n m p')).
   - apply comp_len_eq.
     assumption.
   - rewrite H0.
     exact q.
 Defined.
-Definition comp_len_f' {n n' p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n p)) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n p')) n'.
-Proof.
-  assert (@Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p')).
-  - apply comp_len_eq.
-    assumption.
-  - rewrite <- H0.
-    exact q.
-Defined.
   
-Lemma match_tr {n} : forall p p', Compiler.matched (n := n) (Language.prog p) -> eval p p' -> Compiler.matched (Language.prog p').
+Lemma match_tr {n m} : forall p p', Compiler.matched (n := n) (Language.prog p) -> eval p p' -> Compiler.matched (Language.prog p' (m := m)).
 Proof.
   intros.
   assert (Language.prog p = Language.prog p').
@@ -53,18 +45,18 @@ Proof.
     assumption.
 Qed.
 
-Lemma comp_link_prog {n : nat} : forall p HA q, Compiler.compile_link p HA = q -> q.(Assembly.prog) = Compiler.link (@Compiler.compile'' n p.(Language.prog)).
+Lemma comp_link_prog {n m} : forall p HA HA1 q, Compiler.compile_link p HA HA1 = q -> q.(Assembly.prog) = Compiler.link (@Compiler.compile'' n p.(@Language.prog n m)).
 Proof.
   intros.
   rewrite <- H.
   assert (Assembly.prog
   {|
-    Assembly.prog := Compiler.link (Assembly.prog (Compiler.compile' p HA));
-    Assembly.mem := Assembly.mem (Compiler.compile' p HA);
-    Assembly.pc := Assembly.pc (Compiler.compile' p HA);
-    Assembly.ac := Assembly.ac (Compiler.compile' p HA);
-    Assembly.b := Assembly.b (Compiler.compile' p HA)
-  |} = Compiler.link (Assembly.prog (Compiler.compile' p HA))).
+    Assembly.prog := Compiler.link (Assembly.prog (Compiler.compile' p HA HA1));
+    Assembly.mem := Assembly.mem (Compiler.compile' p HA HA1);
+    Assembly.pc := Assembly.pc (Compiler.compile' p HA HA1);
+    Assembly.ac := Assembly.ac (Compiler.compile' p HA HA1);
+    Assembly.b := Assembly.b (Compiler.compile' p HA HA1)
+  |} = Compiler.link (Assembly.prog (Compiler.compile' p HA HA1))).
   now reflexivity.
   unfold Compiler.compile_link.
   rewrite H0.
@@ -91,17 +83,18 @@ Proof.
       exact t0.
 Defined.
 
+
 Theorem comp_correct {n : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
-    exists q', Compiler.compile p' q' /\ (Common.plus eval') q (comp_len_f (n := n) E q').
+    exists q', Compiler.compile p' q' /\ (Common.plus eval') q (comp_len_f (n := n) (n' := n) E q').
 Proof.
   intros.
   assert (n <> 0).
   inversion H. assumption.
-  exists (Compiler.compile_link p' H0).
+  exists (Compiler.compile_link p' H0 H0).
   split.
-  - apply Compiler.comp_r with (H := H0).
+  - apply Compiler.comp_r with (H := H0) (H1 := H0).
     + assert (Compiler.matched (Language.prog p)).
       inversion H.
       assumption.

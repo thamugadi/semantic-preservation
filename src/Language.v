@@ -15,23 +15,23 @@ Inductive instr : Type :=
   | Halt : instr.
 Definition program (n : nat) := t instr n.
 
-Record state {n : nat} : Type := mkState
+Record state {n m : nat} : Type := mkState
 { 
   prog : program n;
-  mem : t nat 32;
+  mem : t nat m;
   pc : Fin.t n;
-  ptr : Fin.t 32;
+  ptr : Fin.t m;
 }.
 
 Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr := prog[@pc].
 
-Inductive read_instr {n} (p : state) (i : instr) : Prop  :=
-  | ri : read_instr' p.(prog n) p.(pc n) = i -> read_instr p i.
+Inductive read_instr {n m} (p : state) (i : instr) : Prop  :=
+  | ri : read_instr' p.(prog n m) p.(pc n m) = i -> read_instr p i.
 
-Definition read_mem' (mem : t nat 32) (ptr : Fin.t 32) : nat := mem[@ptr].
+Definition read_mem' {m} (mem : t nat m) (ptr : Fin.t m) : nat := mem[@ptr].
 
-Inductive read_mem {n} (p : state) (e : nat) : Prop  :=
-  | mi : read_mem' p.(mem n) p.(ptr n) = e -> read_mem p e.
+Inductive read_mem {n m} (p : state) (e : nat) : Prop  :=
+  | mi : read_mem' p.(mem n m) p.(ptr n m) = e -> read_mem p e.
 
 Fixpoint to_nat {n} (x : Fin.t n) : nat.
 Proof.
@@ -73,9 +73,9 @@ Inductive matching_ret {n} (p : program n) (x : Fin.t n) (x' : Fin.t n): Prop :=
 (*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
 
-Inductive semantics {n} (p : state) (p' : state) : Prop :=
+Inductive semantics {n m} (p : state) (p' : state) : Prop :=
   | ptr_inc : read_instr p PtrInc ->  to_nat p.(ptr) + 1 = to_nat p'.(ptr) ->
-                   to_nat p.(pc n) + 1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
+                   to_nat p.(pc n m) + 1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
                    p.(mem) = p'.(mem) -> semantics p p'
   | ptr_dec : read_instr p PtrDec -> to_nat p.(ptr) - 1 = to_nat p'.(ptr) ->
                     to_nat p.(pc) +1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
