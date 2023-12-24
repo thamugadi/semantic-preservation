@@ -18,9 +18,9 @@ Definition program (n : nat) := t instr n.
 Record state {n : nat} : Type := mkState
 { 
   prog : program n;
-  mem : t nat 512;
+  mem : t nat 32;
   pc : Fin.t n;
-  ptr : Fin.t 512;
+  ptr : Fin.t 32;
 }.
 
 Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr := prog[@pc].
@@ -28,7 +28,7 @@ Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr := prog[@pc
 Inductive read_instr {n} (p : state) (i : instr) : Prop  :=
   | ri : read_instr' p.(prog n) p.(pc n) = i -> read_instr p i.
 
-Definition read_mem' (mem : t nat 512) (ptr : Fin.t 512) : nat := mem[@ptr].
+Definition read_mem' (mem : t nat 32) (ptr : Fin.t 32) : nat := mem[@ptr].
 
 Inductive read_mem {n} (p : state) (e : nat) : Prop  :=
   | mi : read_mem' p.(mem n) p.(ptr n) = e -> read_mem p e.

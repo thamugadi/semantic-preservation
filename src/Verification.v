@@ -16,7 +16,7 @@ Import Nat.
 Module Verification.
 
 Definition eval {n} := @Language.semantics n.
-Definition eval' {n} := @Assembly.semantics n 512.
+Definition eval' {n} := @Assembly.semantics n 32.
 
 Lemma comp_len_eq : forall n p p', eval p p' -> @Compiler.comp_len n (@Language.prog n p) = @Compiler.comp_len n (@Language.prog n p').
 Proof.
@@ -71,14 +71,25 @@ Proof.
   f_equal.
 Qed.
 
+Definition len_asm {n} (i : @Assembly.instr n) : nat :=
+  match i with
+  | Assembly.Add 1 => 1
+  | Assembly.Sub 1 => 1
+  | Assembly.Swap => 6
+  | Assembly.Skip => 2
+  | Assembly.Halt => 1
+  | _ => 0
+  end.
 
-Lemma comp_instr {n : nat} : forall (x : Fin.t n) (p : Language.program n), Compiler.compile_first p[@x] = (Compiler.compile'' p)[@Compiler.compile_index p x].
+Fixpoint to_nat {n} (x : Fin.t n) : nat.
 Proof.
-Admitted. (* to be done (+ another one for linking) *)
-
-Lemma comp_instr2 {n} : forall p i H, @Language.read_instr n p i -> Assembly.read_instr (Compiler.compile_link p H) (Compiler.compile_first i).
-Proof.
-Admitted. (* todo : generalize it for n compiler instructions*)
+  destruct x eqn:H.
+  - exact 0.
+  - apply plus.
+    + exact 1.
+    + apply to_nat with (n := n).
+      exact t0.
+Defined.
 
 Theorem comp_correct {n : nat} :
     forall p q, Compiler.compile p q -> 
@@ -95,20 +106,17 @@ Proof.
       inversion H.
       assumption.
       apply match_tr with (p := p); assumption.
-    + reflexivity.
-  - destruct E; remember (Compiler.compile_link p' H0) as q';
-    inversion H;
-    (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect; ssimpl).
-    (* 8 proofs for each op sem constructor. to be done: *)
+    + reflexivity. 
+  - (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect).
+    ssimpl.
     + apply Common.t_base.
       apply Assembly.add with (n' := 1).
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
+      * admit. (*requires a general lemma*)
+      * ssimpl. (*requires a general lemma*) admit.
+      * now reflexivity. (*easy*)
+      * now reflexivity.
+      * admit. (*probably will be deduced from the general lemma for (1)*)
+      * admit. (*same*)
 Admitted.
 
 End Verification.

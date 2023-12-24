@@ -65,6 +65,17 @@ Fixpoint compile''_ {n n'} (p : Language.program n) :
   | Language.Halt :: h => Assembly.Halt   :: compile''_ h
   end.
 
+Definition compile_one {n : nat} (i : Language.instr) : @Assembly.program (comp_len [i]) :=
+  match i with
+  | Language.PtrInc => [Assembly.Add 1]
+  | Language.PtrDec => [Assembly.Sub 1]
+  | Language.Inc => [Assembly.Swap; Assembly.Load; Assembly.Add 1; Assembly.Store; Assembly.Zero; Assembly.Swap]
+  | Language.Dec => [Assembly.Swap; Assembly.Load; Assembly.Sub 1; Assembly.Store; Assembly.Zero; Assembly.Swap]
+  | Language.Jump => [Assembly.Skip; Assembly.UJUMP]
+  | Language.Ret => [Assembly.Skip; Assembly.URET]
+  | Language.Halt => [Assembly.Halt]
+  end.
+
 Definition compile_first {n : nat} (i : Language.instr) : Assembly.instr (n:=n) :=
   match i with
   | Language.PtrInc => Assembly.Add 1
@@ -205,27 +216,27 @@ Proof.
   unfold not. intros.
   destruct h; inversion H0.
 Qed.
-Lemma lm2 : 512 <> 0.
+Lemma lm2 : 32 <> 0.
 Proof. lia. Qed.
 
 Definition compile' {n}
   (p : Language.state (n := n)) (HA: n <> 0) : 
-  (Assembly.state (n := comp_len p.(Language.prog)) (m := 512)) :=
+  (Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) :=
   let newlen := comp_len p.(Language.prog) in
   let newpc := compile_index p.(Language.prog) p.(Language.pc) in
   let f1_index := make_f1 (comp_len p.(Language.prog)) (lm1 p HA) in
-  let f1_mem := make_f1 512 lm2 in
-  @Assembly.mkState newlen 512 (compile'' p.(Language.prog)) p.(Language.mem) newpc f1_mem p.(Language.ptr).
+  let f1_mem := make_f1 32 lm2 in
+  @Assembly.mkState newlen 32 (compile'' p.(Language.prog)) p.(Language.mem) newpc f1_mem p.(Language.ptr).
 
 Definition compile_link {n} (p : Language.state (n := n)) (HA : n <> 0) : 
-  (Assembly.state (n := comp_len p.(Language.prog)) (m := 512)) :=
+  (Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) :=
   let cpl := compile' p HA in
-  Assembly.mkState (comp_len (Language.prog p)) 512 (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
+  Assembly.mkState (comp_len (Language.prog p)) 32 (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
 
 Compute (link [Assembly.URET; Assembly.Load; Assembly.UJUMP]).
 
 Inductive compile {n}
   (p : Language.state (n := n))
-  (q : Assembly.state (n := comp_len p.(Language.prog)) (m := 512)) : Prop :=
+  (q : Assembly.state (n := comp_len p.(Language.prog)) (m := 32)) : Prop :=
   | comp_r : forall H, matched (p.(Language.prog)) -> q = compile_link p H -> compile p q.
 End Compiler.

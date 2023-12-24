@@ -15,8 +15,7 @@ Inductive instr {n} : Type :=
   | Zero : instr
   | Halt : instr
   | UJUMP : instr (* unlinked *)
-  | URET : instr (* unlinked *)
-  | URET_inter : (Fin.t n) -> instr (* unlinked, stage 2 *).
+  | URET : instr (* unlinked *).
 
 Definition program' (n : nat) (n' : nat) := t (@instr n') n.
 Definition program (n : nat) := program' n n. 
