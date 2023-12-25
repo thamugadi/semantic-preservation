@@ -85,20 +85,9 @@ Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Fixpoint read_group_instr' {n} (prog : Assembly.program n) (pc : Fin.t n) : Assembly.program' (len_asm (Assembly.read_instr' prog pc)) n.
+Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
 Admitted.
-
-Definition len_asm_eq {n m i H1 H2} (p : @Language.state n m) (prog : Assembly.program (@Compiler.comp_len 1 [i])) : Assembly.program'
-    (len_asm
-       (Assembly.read_instr' (Assembly.prog (Compiler.compile_link p H1 H2))
-          (Assembly.pc (Compiler.compile_link p H1 H2))))
-    (Compiler.comp_len (@Language.prog n m p)).
-Proof.
-  destruct ((Assembly.read_instr' (Assembly.prog (Compiler.compile_link p H1 H2)) (Assembly.pc (Compiler.compile_link p H1 H2)))).
-Admitted.
-
-Lemma read_comp {n m} : forall p i H1 H2, i <> Language.Jump -> i <> Language.Ret -> Language.read_instr p i -> read_group_instr' (Compiler.compile_link p H1 H2).(Assembly.prog) (Compiler.compile_link p H1 H2).(Assembly.pc) = len_asm_eq (n := n) (m := m) p (Compiler.compile_one (n := n) i).
-Proof.
+Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Sub 1).
 Admitted.
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Language.to_nat pc0 + 1 = Language.to_nat pc -> Assembly.to_nat (Compiler.compile_index prog pc0) + vec_len (@Compiler.compile_one n i) = Assembly.to_nat (@Compiler.compile_index n prog pc).
@@ -126,14 +115,32 @@ Proof.
     ssimpl.
     + apply Common.t_base.
       apply Assembly.add with (n' := 1).
-      * (*requires a general lemma*) admit.
+      * assert (Assembly.read_instr (@Compiler.compile_link n m {|Language.prog := prog;
+       Language.mem := mem;
+       Language.pc := pc0;
+       Language.ptr := ptr0|} H2 H3) (Assembly.Add 1)).
+       apply read_comp_ptrinc. ssimpl.
+       assumption.
       * simpl.
         apply compiled_pc with (i := Language.PtrInc); assumption.
       * now reflexivity.
       * now reflexivity.
-      * admit.
-      * admit.
-    + admit. (*same*)
+      * simpl. unfold Compiler.make_f1. ssimpl.
+      * ssimpl.
+    + apply Common.t_base.
+      apply Assembly.sub with (n' := 1).
+      * assert (Assembly.read_instr (@Compiler.compile_link n m {|Language.prog := prog;
+       Language.mem := mem;
+       Language.pc := pc0;
+       Language.ptr := ptr0|} H2 H3) (Assembly.Sub 1)).
+       apply read_comp_ptrdec. ssimpl.
+       assumption.
+      * simpl.
+        apply compiled_pc with (i := Language.PtrDec); assumption.
+      * now reflexivity.
+      * now reflexivity.
+      * simpl. unfold Compiler.make_f1. ssimpl.
+      * ssimpl.
     + (*assert the existence of q1,q2,q3,q4,q5*) admit.
     + (*assert the existence of q1,q2,q3,q4,q5*) admit.
 

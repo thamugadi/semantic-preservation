@@ -223,7 +223,7 @@ Definition compile' {n m}
   let newpc := compile_index p.(Language.prog) p.(Language.pc) in
   let f1_index := make_f1 (comp_len p.(Language.prog)) (lm1 p HA) in
   let f1_mem := make_f1 m HA2 in
-  @Assembly.mkState newlen m (compile'' p.(Language.prog)) p.(Language.mem) newpc f1_mem p.(Language.ptr).
+  @Assembly.mkState newlen m (compile'' p.(Language.prog)) p.(Language.mem) newpc p.(Language.ptr) f1_mem.
 
 Definition compile_link {n m} (p : Language.state (n := n)) (HA : n <> 0) (HA2 : m <> 0) : 
   (Assembly.state (n := comp_len p.(Language.prog)) (m := m)) :=
