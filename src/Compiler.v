@@ -205,7 +205,6 @@ Proof.
     + exact IHn.
 Defined.
 
-
 Lemma lm1 {n m} : forall p, n <> 0 -> comp_len (@Language.prog n m p) <> 0.
 Proof.
   intros.

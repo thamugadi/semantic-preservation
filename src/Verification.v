@@ -83,18 +83,51 @@ Proof.
       exact t0.
 Defined.
 
+Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Theorem comp_correct {n : nat} :
+Definition read_group_instr' {n} (prog : Assembly.program n) (pc : Fin.t n) : Assembly.program' (len_asm (Assembly.read_instr' prog pc)) n.
+Admitted.
+Check Language.prog.
+
+Definition len_asm_eq {n m i H1 H2} (p : @Language.state n m) (prog : Assembly.program (@Compiler.comp_len 1 [i])) : Assembly.program'
+    (len_asm
+       (Assembly.read_instr' (Assembly.prog (Compiler.compile_link p H1 H2))
+          (Assembly.pc (Compiler.compile_link p H1 H2))))
+    (Compiler.comp_len (@Language.prog n m p)).
+Proof.
+  destruct ((Assembly.read_instr' (Assembly.prog (Compiler.compile_link p H1 H2)) (Assembly.pc (Compiler.compile_link p H1 H2)))).
+  - sfirstorder.
+  - sfirstorder.
+  - sauto.
+  - sauto.
+  - sfirstorder.
+  - sauto lq: on.
+  - fcrush. 
+  - sfirstorder.
+  - sauto lq: on.
+  - sfirstorder.
+  - sfirstorder.
+Defined.
+
+Lemma read_comp {n m} : forall p i H1 H2, i <> Language.Jump -> i <> Language.Ret -> Language.read_instr p i -> read_group_instr' (Compiler.compile_link p H1 H2).(Assembly.prog) (Compiler.compile_link p H1 H2).(Assembly.pc) = len_asm_eq (n := n) (m := m) p (Compiler.compile_one (n := n) i).
+Admitted.
+
+Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Language.to_nat pc0 + 1 = Language.to_nat pc -> Assembly.to_nat (Compiler.compile_index prog pc0) + vec_len (@Compiler.compile_one n i) = Assembly.to_nat (@Compiler.compile_index n prog pc).
+Admitted.
+
+Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
-    exists q', Compiler.compile p' q' /\ (Common.plus eval') q (comp_len_f (n := n) (n' := n) E q').
+    exists q', Compiler.compile p' q' /\ (Common.plus eval') q (comp_len_f (n := n) (n' := m) E q').
 Proof.
   intros.
   assert (n <> 0).
   inversion H. assumption.
-  exists (Compiler.compile_link p' H0 H0).
+  assert (m <> 0).
+  inversion H. assumption.
+  exists (Compiler.compile_link p' H0 H1).
   split.
-  - apply Compiler.comp_r with (H := H0) (H1 := H0).
+  - apply Compiler.comp_r with (H := H0) (H1 := H1).
     + assert (Compiler.matched (Language.prog p)).
       inversion H.
       assumption.
@@ -104,12 +137,20 @@ Proof.
     ssimpl.
     + apply Common.t_base.
       apply Assembly.add with (n' := 1).
-      * admit. (*requires a general lemma*)
-      * ssimpl. (*requires a general lemma*) admit.
-      * now reflexivity. (*easy*)
+      * (*requires a general lemma*) admit.
+      * simpl.
+        apply compiled_pc with (i := Language.PtrInc); assumption.
       * now reflexivity.
-      * admit. (*probably will be deduced from the general lemma for (1)*)
-      * admit. (*same*)
+      * now reflexivity.
+      * admit.
+      * admit.
+    + admit. (*same*)
+    + (*assert the existence of q1,q2,q3,q4,q5*) admit.
+    + (*assert the existence of q1,q2,q3,q4,q5*) admit.
+    + (*assert the existence of q1*) admit.
+    + (*assert the existence of q1*) admit.
+    + (*assert the existence of q1*) admit.
+    + (*assert the existence of q1*) admit.
 Admitted.
-
 End Verification.
+
