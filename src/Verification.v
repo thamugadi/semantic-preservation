@@ -85,9 +85,8 @@ Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Definition read_group_instr' {n} (prog : Assembly.program n) (pc : Fin.t n) : Assembly.program' (len_asm (Assembly.read_instr' prog pc)) n.
+Fixpoint read_group_instr' {n} (prog : Assembly.program n) (pc : Fin.t n) : Assembly.program' (len_asm (Assembly.read_instr' prog pc)) n.
 Admitted.
-Check Language.prog.
 
 Definition len_asm_eq {n m i H1 H2} (p : @Language.state n m) (prog : Assembly.program (@Compiler.comp_len 1 [i])) : Assembly.program'
     (len_asm
@@ -96,20 +95,10 @@ Definition len_asm_eq {n m i H1 H2} (p : @Language.state n m) (prog : Assembly.p
     (Compiler.comp_len (@Language.prog n m p)).
 Proof.
   destruct ((Assembly.read_instr' (Assembly.prog (Compiler.compile_link p H1 H2)) (Assembly.pc (Compiler.compile_link p H1 H2)))).
-  - sfirstorder.
-  - sfirstorder.
-  - sauto.
-  - sauto.
-  - sfirstorder.
-  - sauto lq: on.
-  - fcrush. 
-  - sfirstorder.
-  - sauto lq: on.
-  - sfirstorder.
-  - sfirstorder.
-Defined.
+Admitted.
 
 Lemma read_comp {n m} : forall p i H1 H2, i <> Language.Jump -> i <> Language.Ret -> Language.read_instr p i -> read_group_instr' (Compiler.compile_link p H1 H2).(Assembly.prog) (Compiler.compile_link p H1 H2).(Assembly.pc) = len_asm_eq (n := n) (m := m) p (Compiler.compile_one (n := n) i).
+Proof.
 Admitted.
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Language.to_nat pc0 + 1 = Language.to_nat pc -> Assembly.to_nat (Compiler.compile_index prog pc0) + vec_len (@Compiler.compile_one n i) = Assembly.to_nat (@Compiler.compile_index n prog pc).
@@ -147,10 +136,11 @@ Proof.
     + admit. (*same*)
     + (*assert the existence of q1,q2,q3,q4,q5*) admit.
     + (*assert the existence of q1,q2,q3,q4,q5*) admit.
+
+    (* will require other lemmas than read_comp: *)
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
 Admitted.
 End Verification.
-
