@@ -51,6 +51,12 @@ Proof.
       exact t.
 Defined.
 
+Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
+  match f in Fin.t n return Fin.t (S n) with
+  | Fin.F1 => Fin.F1
+  | Fin.FS f' => Fin.FS (weaken_fin_t f')
+  end.
+
 (* Small-step operational semantics for our target language.*)
 
 Inductive semantics {n m} (p : state) (p' : state) : Prop :=
@@ -68,8 +74,7 @@ Inductive semantics {n m} (p : state) (p' : state) : Prop :=
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
               to_nat p'.(ac) = (to_nat p.(ac)) - n' -> semantics p p'
   | jump : forall n', read_instr p (Jump n') -> p.(prog) = p'.(prog) ->
-               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> p'.(pc) = n' ->
-               p.(b) = p'.(b) -> semantics p p'
+               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> weaken_fin_t (p'.(pc)) = Fin.FS n' -> p.(b) = p'.(b) -> semantics p p'
   | skipz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
                read_mem p 0 -> to_nat (p'.(pc)) = to_nat (p.(pc)) + 2 -> semantics p p'

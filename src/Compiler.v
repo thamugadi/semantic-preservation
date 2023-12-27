@@ -8,6 +8,7 @@ Import Vector.VectorNotations.
 Require Import Program.Equality.
 Require Import PeanoNat.
 Require Import Lia.
+Require Import Classical.
 Import Nat.
 Require Import Coq.Vectors.VectorEq.
 
@@ -145,6 +146,14 @@ Fixpoint r_indexes' {n n'} (p : Assembly.program' n n') : (Vector.t (Fin.t n) (n
 Definition r_indexes {n} (p : Assembly.program n) : Vector.t (Fin.t n) (nb_ret p) :=
   r_indexes' p.
 
+Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
+Proof.
+  destruct x eqn:H1.
+  - auto with *.
+  - exact Fin.F1.
+Defined.
+  
+
 Fixpoint link_jump' {n ln ln'} (p : Assembly.program n) 
                           (jumps : Vector.t (Fin.t n) ln) (rets : Vector.t (Fin.t n) ln') :
                           Assembly.program n :=
@@ -161,12 +170,6 @@ Definition link_jump {n} (p : Assembly.program n) : (Assembly.program n) :=
   link_jump' p (j_indexes p) (r_indexes p).
 
 Check pred.
-Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
-Proof.
-  destruct x eqn:H1.
-  - auto with *.
-  - exact Fin.F1.
-Defined.
 
 Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   match f in Fin.t n return Fin.t (S n) with
@@ -190,7 +193,7 @@ Fixpoint link_ret' {n n'} (p : Vector.t (@Assembly.instr n * (Fin.t n)) n') (p' 
   | (_, ind) :: t => link_ret' t p'
   end.
 
-(*problem : it should jump to the instruction right after the compiler jump/ret, after the linking.*)
+(* note : an offset of 1 is added to jump's operand, in Assembly.semantics*)
 
 Definition link_ret {n} (p : Assembly.program n) : Assembly.program n := link_ret' (make_ind_v p) p.
 
