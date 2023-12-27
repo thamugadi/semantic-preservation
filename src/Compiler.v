@@ -190,7 +190,7 @@ Fixpoint link_ret' {n n'} (p : Vector.t (@Assembly.instr n * (Fin.t n)) n') (p' 
   | (_, ind) :: t => link_ret' t p'
   end.
 
-(*Cannot guess decreasing argument of fix.*)
+(*problem : it should jump to the instruction right after the compiler jump/ret, after the linking.*)
 
 Definition link_ret {n} (p : Assembly.program n) : Assembly.program n := link_ret' (make_ind_v p) p.
 

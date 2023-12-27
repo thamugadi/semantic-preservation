@@ -84,9 +84,21 @@ Proof.
 Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
+Check Compiler.compile_first.
+Check Compiler.compile''.
 
 Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
+Proof.
+  intros.
+  ssimpl.
+  apply Assembly.ri.
+  dependent induction pc; dependent destruction prog.
+  ssimpl;
+  unfold eq_rec_r, eq_rec, eq_rect; ssimpl;
+  unfold Assembly.read_instr'; ssimpl.
+  
 Admitted.
+  
 Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Sub 1).
 Admitted.
 

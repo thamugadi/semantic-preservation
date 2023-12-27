@@ -46,13 +46,20 @@ Defined.
 Inductive mem_diff {m} (m1 : t nat m) (m2 : t nat m) (x : Fin.t m) : Prop :=
   | md : (forall i, i <> x -> m2[@i] = m1[@i]) -> mem_diff m1 m2 x. 
 
+
+Definition option_inc (i : option nat) : option nat :=
+  match i with
+  | None => None
+  | Some a => Some (a + 1)
+  end.
+
 Fixpoint matching_ret' {n} (l : t instr n) (idx : nat) (c c' : nat) : option nat :=
   match l with
   | [] => None
   | i :: h => if c' <=? idx then matching_ret' h idx c (c'+1) else
     match i with
     | Jump => matching_ret' h idx (c+1) (c'+1)
-    | Ret => if c =? 0 then Some c' else matching_ret' h idx (c-1) (c'+1)
+    | Ret => if c =? 0 then (Some (c' + 1)) else matching_ret' h idx (c-1) (c'+1)
     | _ => matching_ret' h idx c (c'+1)
   end
 end.
@@ -61,7 +68,7 @@ Fixpoint matching_jump' {n} (l : t instr n) (idx : nat) (c : nat) (c' : option n
   match l with
   | [] => None
   | Jump :: h => if c =? idx then None else matching_jump' h idx (c+1) (Some c)
-  | Ret :: h => if c =? idx then c' else None
+  | Ret :: h => if c =? idx then (option_inc c') else None
   | _ :: h => if c =? idx then None else matching_jump' h idx (c+1) c'
   end.
 
