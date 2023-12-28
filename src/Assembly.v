@@ -4,12 +4,12 @@ Require Import Program.Equality.
 Require Import Common.
 Module Assembly.
 
-Inductive instr {n} : Type :=
+Inductive instr : Type :=
   | Load : instr
   | Store : instr
   | Add : nat -> instr
   | Sub : nat -> instr
-  | Jump : (Fin.t n) -> instr
+  | Jump : nat -> instr
   | Skip : instr
   | Swap : instr
   | Zero : instr
@@ -17,8 +17,7 @@ Inductive instr {n} : Type :=
   | UJUMP : instr (* unlinked *)
   | URET : instr (* unlinked *).
 
-Definition program' (n : nat) (n' : nat) := t (@instr n') n.
-Definition program (n : nat) := program' n n. 
+Definition program (n : nat) := t instr n. 
 Record state {n m : nat} : Type := mkState
 { 
   prog : @program n;
@@ -74,7 +73,7 @@ Inductive semantics {n m} (p : state) (p' : state) : Prop :=
               p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
               to_nat p'.(ac) = (to_nat p.(ac)) - n' -> semantics p p'
   | jump : forall n', read_instr p (Jump n') -> p.(prog) = p'.(prog) ->
-               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> weaken_fin_t (p'.(pc)) = Fin.FS n' -> p.(b) = p'.(b) -> semantics p p'
+               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> to_nat (p'.(pc)) = n'+1 -> p.(b) = p'.(b) -> semantics p p'
   | skipz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
                read_mem p 0 -> to_nat (p'.(pc)) = to_nat (p.(pc)) + 2 -> semantics p p'

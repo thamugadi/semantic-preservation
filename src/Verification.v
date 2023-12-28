@@ -63,7 +63,7 @@ Proof.
   f_equal.
 Qed.
 
-Definition len_asm {n} (i : @Assembly.instr n) : nat :=
+Definition len_asm (i : Assembly.instr) : nat :=
   match i with
   | Assembly.Add 1 => 1
   | Assembly.Sub 1 => 1
@@ -84,22 +84,22 @@ Proof.
 Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
-Check Compiler.compile_first.
-Check Compiler.compile''.
+
+Lemma read_instr_eq {n} : forall p i, (Compiler.compile'' p)[@@Compiler.compile_index n p i] = @Compiler.compile_first n p[@i].
+Proof.
+  induction i; dependent destruction p; destruct h; simpl;
+  try (now reflexivity); try (apply IHi).
+Qed.
+
+(*should prove a lemma stating that linking doesn't affect non-jump instrs*)
 
 Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
-Proof.
-  intros.
-  ssimpl.
-  apply Assembly.ri.
-  dependent induction pc; dependent destruction prog.
-  ssimpl;
-  unfold eq_rec_r, eq_rec, eq_rect; ssimpl;
-  unfold Assembly.read_instr'; ssimpl.
-  
 Admitted.
   
 Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Sub 1).
+Admitted.
+
+Lemma read_comp_halt {n m} : forall p H1 H2, Language.read_instr p Language.Halt -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Halt).
 Admitted.
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Language.to_nat pc0 + 1 = Language.to_nat pc -> Assembly.to_nat (Compiler.compile_index prog pc0) + vec_len (@Compiler.compile_one n i) = Assembly.to_nat (@Compiler.compile_index n prog pc).
