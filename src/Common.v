@@ -19,6 +19,17 @@ Proof.
   apply rt_refl.
 Qed.
 
+
+Fixpoint to_nat {n} (x : Fin.t n) : nat.
+Proof.
+  destruct x eqn:H.
+  - exact 0.
+  - apply plus.
+    + exact 1.
+    + apply to_nat with (n := n).
+      exact t.
+Defined.
+
 Inductive plus {A : Type} (R : A -> A -> Prop) : A -> A -> Prop :=
   | t_base : forall x y, R x y -> plus R x y
   | t_trans : forall x y z, R x y -> plus R y z -> plus R x z.
