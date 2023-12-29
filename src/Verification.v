@@ -85,13 +85,23 @@ Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
+Definition read_group_instr {n} (prog : Language.program n) (pc : Fin.t n) :
+                                Assembly.program (Compiler.comp_len [prog[@pc]]).
+Admitted.
+Lemma read_comp_gen {n} : forall p pc, read_group_instr p pc =
+                          Compiler.compile_one (nth p pc (m := n)).
+Admitted.
+
 Lemma read_instr_eq {n} : forall p i, (Compiler.compile'' p)[@@Compiler.compile_index n p i] = @Compiler.compile_first n p[@i].
 Proof.
-  induction i; dependent destruction p; destruct h; simpl;
-  try (now reflexivity); try (apply IHi).
+  induction i; dependent destruction p;
+  destruct h; simpl;
+  try (now reflexivity);
+  try (apply IHi).
 Qed.
-(*should prove another lemma generalizing this one for N compiled instructions*)
-(*should find a lemma as general as this one for link*)
+
+(*todo: prove another lemma generalizing this one for N compiled instructions*)
+(*todo: find a lemma as general as read_instr_eq for link*)
 
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
@@ -136,26 +146,7 @@ Proof.
   assumption.
 Qed.
 
-Lemma read_comp_halt {n m} : forall p H1 H2, Language.read_instr p Language.Halt -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Halt).
-Proof.
-  unfold Compiler.compile_link.
-  unfold Compiler.compile'.
-  intros.
-  ssimpl.
-  unfold Language.read_instr' in H0.
-  apply Assembly.ri.
-  unfold Assembly.read_instr'. simpl.
-  assert ((Compiler.compile'' prog)[@Compiler.compile_index prog pc] =
-  @Compiler.compile_first n prog[@pc]).
-  apply read_instr_eq.
-  rewrite H0 in H.
-  simpl in H.
-  apply link_stable.
-  split; discriminate.
-  assumption.
-Qed.
-
-Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Common.to_nat pc0 + 1 = Common.to_nat pc -> Common.to_nat (Compiler.compile_index prog pc0) + vec_len (@Compiler.compile_one n i) = Common.to_nat (@Compiler.compile_index n prog pc).
+Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Common.to_nat pc0 + 1 = Common.to_nat pc -> Common.to_nat (Compiler.compile_index prog pc0) + vec_len (Compiler.compile_one i) = Common.to_nat (@Compiler.compile_index n prog pc).
 Proof.
 Admitted.
 

@@ -65,7 +65,7 @@ Fixpoint compile'' {n} (p : Language.program n) :
   | Language.Halt :: h => Assembly.Halt   :: compile'' h
   end.
 
-Definition compile_one {n : nat} (i : Language.instr) : @Assembly.program (comp_len [i]) :=
+Definition compile_one (i : Language.instr) : @Assembly.program (comp_len [i]) :=
   match i with
   | Language.PtrInc => [Assembly.Add 1]
   | Language.PtrDec => [Assembly.Sub 1]
