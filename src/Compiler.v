@@ -235,7 +235,8 @@ Definition compile' {n m}
 Definition compile_link {n m} (p : Language.state (n := n)) (HA : n <> 0) (HA2 : m <> 0) : 
   (Assembly.state (n := comp_len p.(Language.prog)) (m := m)) :=
   let cpl := compile' p HA HA2 in
-  Assembly.mkState (comp_len (Language.prog p)) m (link cpl.(Assembly.prog)) cpl.(Assembly.mem) cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
+  Assembly.mkState (comp_len (Language.prog p)) m (link cpl.(Assembly.prog)) cpl.(Assembly.mem)
+  cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
 
 Compute (compile_link (Language.mkState 2 2 [Language.Jump; Language.Ret] [0;0] Fin.F1 Fin.F1)).
 

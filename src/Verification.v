@@ -18,7 +18,9 @@ Module Verification.
 Definition eval {n m} := @Language.semantics n m.
 Definition eval' {n m} := @Assembly.semantics n m.
 Check eval.
-Lemma comp_len_eq : forall n m p p', eval p p' -> @Compiler.comp_len n (@Language.prog n m p) = @Compiler.comp_len n (@Language.prog n m p').
+Lemma comp_len_eq : forall n m p p', eval p p' ->
+                    @Compiler.comp_len n (@Language.prog n m p) =
+                    @Compiler.comp_len n (@Language.prog n m p').
 Proof.
   intros.
   assert (p.(Language.prog) = p'.(Language.prog)).
@@ -27,16 +29,20 @@ Proof.
     reflexivity.
 Defined.
 
-Definition comp_len_f {n n' m p p'} (H : eval p p') (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p')) n') : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p)) n'.
+Definition comp_len_f {n n' m p p'} (H : eval p p') 
+                      (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p')) n') 
+                      : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p)) n'.
 Proof.
-  assert (@Compiler.comp_len n (@Language.prog n m p) = @Compiler.comp_len n (@Language.prog n m p')).
+  assert (@Compiler.comp_len n (@Language.prog n m p) =
+          @Compiler.comp_len n (@Language.prog n m p')).
   - apply comp_len_eq.
     assumption.
   - rewrite H0.
     exact q.
 Defined.
   
-Lemma match_tr {n m} : forall p p', Compiler.matched (n := n) (Language.prog p) -> eval p p' -> Compiler.matched (Language.prog p' (m := m)).
+Lemma match_tr {n m} : forall p p', Compiler.matched (n := n) (Language.prog p) ->
+                       eval p p' -> Compiler.matched (Language.prog p' (m := m)).
 Proof.
   intros.
   assert (Language.prog p = Language.prog p').
@@ -45,7 +51,9 @@ Proof.
     assumption.
 Qed.
 
-Lemma comp_link_prog {n m} : forall p HA HA1 q, Compiler.compile_link p HA HA1 = q -> q.(Assembly.prog) = Compiler.link (@Compiler.compile'' n p.(@Language.prog n m)).
+Lemma comp_link_prog {n m} : forall p HA HA1 q, Compiler.compile_link p HA HA1 = q ->
+                             q.(Assembly.prog) =
+                             Compiler.link (@Compiler.compile'' n p.(@Language.prog n m)).
 Proof.
   intros.
   rewrite <- H.
@@ -92,7 +100,8 @@ Lemma read_comp_gen {n} : forall p pc, read_group_instr p pc =
                           Compiler.compile_one (nth p pc (m := n)).
 Admitted.
 
-Lemma read_instr_eq {n} : forall p i, (Compiler.compile'' p)[@@Compiler.compile_index n p i] = @Compiler.compile_first n p[@i].
+Lemma read_instr_eq {n} : forall p i, (Compiler.compile'' p)[@@Compiler.compile_index n p i]
+                                      = @Compiler.compile_first n p[@i].
 Proof.
   induction i; dependent destruction p;
   destruct h; simpl;
@@ -107,7 +116,9 @@ Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
 Admitted.
   
-Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
+Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc ->
+                               Assembly.read_instr
+                              (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
 Proof.
   unfold Compiler.compile_link.
   unfold Compiler.compile'.
@@ -127,7 +138,9 @@ Proof.
 Qed.
   
   
-Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec -> Assembly.read_instr (@Compiler.compile_link n m p H1 H2) (Assembly.Sub 1).
+Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec ->
+                               Assembly.read_instr (@Compiler.compile_link n m p H1 H2)
+                               (Assembly.Sub 1).
 Proof.
   unfold Compiler.compile_link.
   unfold Compiler.compile'.
@@ -146,14 +159,19 @@ Proof.
   assumption.
 Qed.
 
-Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i -> Common.to_nat pc0 + 1 = Common.to_nat pc -> Common.to_nat (Compiler.compile_index prog pc0) + vec_len (Compiler.compile_one i) = Common.to_nat (@Compiler.compile_index n prog pc).
+Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
+                    Common.to_nat pc0 + 1 = Common.to_nat pc ->
+                    Common.to_nat (Compiler.compile_index prog pc0) +
+                    vec_len (Compiler.compile_one i)
+                    = Common.to_nat (@Compiler.compile_index n prog pc).
 Proof.
 Admitted.
 
 Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
-    exists q', Compiler.compile p' q' /\ (Common.plus eval') q (comp_len_f (n := n) (n' := m) E q').
+    exists q', Compiler.compile p' q' /\
+    (Common.plus eval') q (comp_len_f (n := n) (n' := m) E q').
 Proof.
   intros.
   assert (n <> 0).
@@ -199,7 +217,32 @@ Proof.
       * now reflexivity.
       * simpl. unfold Compiler.make_f1. ssimpl.
       * ssimpl.
-    + (*assert the existence of q1,q2,q3,q4,q5*) admit.
+    + assert (exists q1, eval' (Compiler.compile_link 
+             {| Language.prog := prog;
+              Language.mem := mem0;
+              Language.pc := pc0;
+              Language.ptr := ptr |} H2 H3) q1).
+      admit.
+      destruct H4. remember x as q1.
+      assert (exists q2, eval' q1 q2).
+      admit.
+      destruct H5. remember x0 as q2.
+      assert (exists q3, eval' q2 q3).
+      admit.
+      destruct H6. remember x1 as q3.
+      assert (exists q4, eval' q3 q4).
+      admit.
+      destruct H7. remember x2 as q4.
+      assert (exists q5, eval' q4 q5).
+      admit.
+      destruct H8. remember x3 as q5.
+      clear Heqq1 Heqq2 Heqq3 Heqq4 Heqq5 x x0 x1 x2 x3.
+      apply Common.t_trans with (y := q1). assumption.
+      apply Common.t_trans with (y := q2). assumption.
+      apply Common.t_trans with (y := q3). assumption.
+      apply Common.t_trans with (y := q4). assumption.
+      apply Common.t_trans with (y := q5). assumption.
+      apply Common.t_base. admit.
     + (*assert the existence of q1,q2,q3,q4,q5*) admit.
 
     (* will require other lemmas than read_comp: *)
