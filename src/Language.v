@@ -23,7 +23,8 @@ Record state {n m : nat} : Type := mkState
   ptr : Fin.t m;
 }.
 
-Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr := prog[@pc].
+Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr :=
+ prog[@pc].
 
 Inductive read_instr {n m} (p : state) (i : instr) : Prop  :=
   | ri : read_instr' p.(prog n m) p.(pc n m) = i -> read_instr p i.
@@ -53,18 +54,21 @@ Definition option_inc (i : option nat) : option nat :=
   | Some a => Some (a + 1)
   end.
 
-Fixpoint matching_ret' {n} (l : t instr n) (idx : nat) (c c' : nat) : option nat :=
+Fixpoint matching_ret' {n} (l : t instr n) (idx : nat) (c c' : nat) :
+                           option nat :=
   match l with
   | [] => None
   | i :: h => if c' <=? idx then matching_ret' h idx c (c'+1) else
     match i with
     | Jump => matching_ret' h idx (c+1) (c'+1)
-    | Ret => if c =? 0 then (Some (c' + 1)) else matching_ret' h idx (c-1) (c'+1)
+    | Ret => if c =? 0 then (Some (c' + 1)) else matching_ret' h idx
+             (c-1) (c'+1)
     | _ => matching_ret' h idx c (c'+1)
   end
 end.
 
-Fixpoint matching_jump' {n} (l : t instr n) (idx : nat) (c : nat) (c' : option nat) : option nat :=
+Fixpoint matching_jump' {n} (l : t instr n) (idx : nat) (c : nat) 
+                        (c' : option nat) : option nat :=
   match l with
   | [] => None
   | Jump :: h => if c =? idx then None else matching_jump' h idx (c+1) (Some c)

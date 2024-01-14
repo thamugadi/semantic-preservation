@@ -65,14 +65,17 @@ Fixpoint compile'' {n} (p : Language.program n) :
   | Language.Halt :: h => Assembly.Halt   :: compile'' h
   end.
 
-Definition compile_one (i : Language.instr) : @Assembly.program (comp_len [i]) :=
+Definition compile_one (i : Language.instr) (n : nat)
+                       : @Assembly.program (comp_len [i]) :=
   match i with
   | Language.PtrInc => [Assembly.Add 1]
   | Language.PtrDec => [Assembly.Sub 1]
-  | Language.Inc => [Assembly.Swap; Assembly.Load; Assembly.Add 1; Assembly.Store; Assembly.Zero; Assembly.Swap]
-  | Language.Dec => [Assembly.Swap; Assembly.Load; Assembly.Sub 1; Assembly.Store; Assembly.Zero; Assembly.Swap]
-  | Language.Jump => [Assembly.Skip; Assembly.UJUMP]
-  | Language.Ret => [Assembly.Skip; Assembly.URET]
+  | Language.Inc => [Assembly.Swap; Assembly.Load; Assembly.Add 1;
+                     Assembly.Store; Assembly.Zero; Assembly.Swap]
+  | Language.Dec => [Assembly.Swap; Assembly.Load; Assembly.Sub 1;
+                     Assembly.Store; Assembly.Zero; Assembly.Swap]
+  | Language.Jump => [Assembly.Skip; Assembly.Jump n]
+  | Language.Ret => [Assembly.Skip; Assembly.Jump n]
   | Language.Halt => [Assembly.Halt]
   end.
 
@@ -87,7 +90,8 @@ Definition compile_first {n : nat} (i : Language.instr) : Assembly.instr :=
   | Language.Halt => Assembly.Halt
   end.
 
-Fixpoint compile_index {n} (p : Language.program n) (x : Fin.t n) : Fin.t (comp_len p).
+Fixpoint compile_index {n} (p : Language.program n) (x : Fin.t n) 
+                           : Fin.t (comp_len p).
 Proof.
   destruct x eqn:H1; rewrite (eta p).
   - destruct hd; apply Fin.F1.
@@ -115,18 +119,21 @@ Fixpoint nb_ret {n} (p : Assembly.program n) : nat :=
   | _ :: t => nb_ret t
   end.
 
-Definition vector_zip {A B : Type} {n : nat} (v1 : Vector.t A n) (v2 : Vector.t B n) : Vector.t (A * B) n :=
+Definition vector_zip {A B : Type} {n : nat} (v1 : Vector.t A n)
+                      (v2 : Vector.t B n) : Vector.t (A * B) n :=
   Vector.map2 (fun x y => (x, y)) v1 v2.
 
 
-Fixpoint j_indexes {n} (p : Assembly.program n) : (Vector.t (Fin.t n) (nb_jump p)) :=
+Fixpoint j_indexes {n} (p : Assembly.program n) 
+                       : (Vector.t (Fin.t n) (nb_jump p)) :=
   match p with
   | [] => []
   | Assembly.UJUMP :: t => Fin.F1 :: map Fin.FS (j_indexes t)
   | _ :: t => map Fin.FS (j_indexes t)
   end.
 
-Fixpoint r_indexes {n} (p : Assembly.program n) : (Vector.t (Fin.t n) (nb_ret p)) :=
+Fixpoint r_indexes {n} (p : Assembly.program n) 
+                       : (Vector.t (Fin.t n) (nb_ret p)) :=
   match p with
   | [] => []
   | Assembly.URET :: t => Fin.F1 :: map Fin.FS (r_indexes t)
@@ -142,13 +149,17 @@ Defined.
   
 
 Fixpoint link_jump' {n ln ln'} (p : Assembly.program n) 
-                          (jumps : Vector.t (Fin.t n) ln) (rets : Vector.t (Fin.t n) ln') :
+                          (jumps : Vector.t (Fin.t n) ln)
+                          (rets : Vector.t (Fin.t n) ln') :
                           Assembly.program n :=
   match jumps with
   | [] => p
   | a :: jumps' => match rets with
                   | [] => p
-                  | r :: rets' => link_jump' (replace p a (Assembly.Jump (Assembly.to_nat r))) jumps' rets'
+                  | r :: rets' => link_jump' 
+                                  (replace p a (Assembly.Jump 
+                                  (Assembly.to_nat r)))
+                                  jumps' rets'
                   end
   end.
 
@@ -164,7 +175,8 @@ Fixpoint nb_ljump {n} (p : Assembly.program n) : nat :=
   end.
 
 
-Fixpoint lj_indexes {n} (p : Assembly.program n) : (Vector.t (Fin.t n) (nb_ljump p)) :=
+Fixpoint lj_indexes {n} (p : Assembly.program n) 
+                        : (Vector.t (Fin.t n) (nb_ljump p)) :=
   match p with
   | [] => []
   | Assembly.Jump _ :: t => Fin.F1 :: map Fin.FS (lj_indexes t)
@@ -184,13 +196,16 @@ Fixpoint make_indexes (n : nat) : Vector.t (Fin.t n) n :=
   end.
 
 Fixpoint link_ret' {n ln ln'} (p : Assembly.program n) 
-                          (jumps : Vector.t (Fin.t n) ln) (rets : Vector.t (Fin.t n) ln') :
+                          (jumps : Vector.t (Fin.t n) ln) 
+                          (rets : Vector.t (Fin.t n) ln') :
                           Assembly.program n :=
   match rets with
   | [] => p
   | a :: rets' => match jumps with
                   | [] => p
-                  | r :: jumps' => link_ret' (replace p a (Assembly.Jump (Assembly.to_nat r))) jumps' rets'
+                  | r :: jumps' => link_ret' (replace p a 
+                                   (Assembly.Jump (Assembly.to_nat r)))
+                                   jumps' rets'
                   end
   end.
 
@@ -201,7 +216,8 @@ Definition link_ret {n} (p : Assembly.program n) : (Assembly.program n) :=
 (* note : an offset of 1 is added to jump's operand, in Assembly.semantics*)
 
 
-Definition link {n} (l : Assembly.program n) : (Assembly.program n) := link_ret (link_jump l) .
+Definition link {n} (l : Assembly.program n) : (Assembly.program n) :=
+  link_ret (link_jump l) .
 
 Definition make_vector (A : Type) (x : A) (n : nat) : Vector.t A n.
 Proof.
@@ -230,18 +246,20 @@ Definition compile' {n m}
   let newpc := compile_index p.(Language.prog) p.(Language.pc) in
   let f1_index := make_f1 (comp_len p.(Language.prog)) (lm1 p HA) in
   let f1_mem := make_f1 m HA2 in
-  @Assembly.mkState newlen m (compile'' p.(Language.prog)) p.(Language.mem) newpc p.(Language.ptr) f1_mem.
+  @Assembly.mkState newlen m (compile'' p.(Language.prog)) p.(Language.mem)
+   newpc p.(Language.ptr) f1_mem.
 
-Definition compile_link {n m} (p : Language.state (n := n)) (HA : n <> 0) (HA2 : m <> 0) : 
+Definition compile_link {n m} (p : Language.state (n := n)) (HA : n <> 0)
+                              (HA2 : m <> 0) : 
   (Assembly.state (n := comp_len p.(Language.prog)) (m := m)) :=
   let cpl := compile' p HA HA2 in
-  Assembly.mkState (comp_len (Language.prog p)) m (link cpl.(Assembly.prog)) cpl.(Assembly.mem)
+  Assembly.mkState (comp_len (Language.prog p)) m (link cpl.(Assembly.prog))
+                   cpl.(Assembly.mem)
   cpl.(Assembly.pc) cpl.(Assembly.ac) cpl.(Assembly.b).
-
-Compute (compile_link (Language.mkState 2 2 [Language.Jump; Language.Ret] [0;0] Fin.F1 Fin.F1)).
 
 Inductive compile {n m}
   (p : Language.state (n := n))
   (q : Assembly.state (n := comp_len p.(Language.prog)) (m := m)) : Prop :=
-  | comp_r : forall H H1, matched (p.(Language.prog)) -> q = compile_link p H H1 -> compile p q.
+  | comp_r : forall H H1, matched (p.(Language.prog)) -> q 
+             = compile_link p H H1 -> compile p q.
 End Compiler.

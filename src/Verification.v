@@ -29,9 +29,10 @@ Proof.
     reflexivity.
 Defined.
 
-Definition comp_len_f {n n' m p p'} (H : eval p p') 
-                      (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p')) n') 
-                      : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p)) n'.
+Definition comp_len_f
+ {n n' m p p'} (H : eval p p') 
+ (q : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p')) n') 
+ : @Assembly.state (@Compiler.comp_len n (@Language.prog n m p)) n'.
 Proof.
   assert (@Compiler.comp_len n (@Language.prog n m p) =
           @Compiler.comp_len n (@Language.prog n m p')).
@@ -93,15 +94,9 @@ Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Definition read_group_instr {n} (prog : Language.program n) (pc : Fin.t n) :
-                                Assembly.program (Compiler.comp_len [prog[@pc]]).
-Admitted.
-Lemma read_comp_gen {n} : forall p pc, read_group_instr p pc =
-                          Compiler.compile_one (nth p pc (m := n)).
-Admitted.
-
-Lemma read_instr_eq {n} : forall p i, (Compiler.compile'' p)[@@Compiler.compile_index n p i]
-                                      = @Compiler.compile_first n p[@i].
+Lemma read_instr_eq {n} : forall p i,
+                          (Compiler.compile'' p)[@@Compiler.compile_index n p i]
+                          = @Compiler.compile_first n p[@i].
 Proof.
   induction i; dependent destruction p;
   destruct h; simpl;
@@ -162,9 +157,8 @@ Qed.
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
                     Common.to_nat pc0 + 1 = Common.to_nat pc ->
                     Common.to_nat (Compiler.compile_index prog pc0) +
-                    vec_len (Compiler.compile_one i)
+                    vec_len (Compiler.compile_one i 0)
                     = Common.to_nat (@Compiler.compile_index n prog pc).
-Proof.
 Admitted.
 
 Theorem comp_correct {n m : nat} :
@@ -217,25 +211,31 @@ Proof.
       * now reflexivity.
       * simpl. unfold Compiler.make_f1. ssimpl.
       * ssimpl.
-    + assert (exists q1, eval' (Compiler.compile_link 
-             {| Language.prog := prog;
-              Language.mem := mem0;
-              Language.pc := pc0;
-              Language.ptr := ptr |} H2 H3) q1).
+    + remember (Compiler.compile_link {|Language.prog := prog;Language.mem := mem0;
+               Language.pc := pc0; Language.ptr := ptr|} H2 H3) as q.
+      remember (Compiler.compile_link {|Language.prog := prog;Language.mem := mem;
+               Language.pc := pc; Language.ptr := ptr|} H0 H1) as q'.
+      assert (prog[@pc0] = Language.Inc). ssimpl.
+      assert (Compiler.compile_one Language.Inc 0 =
+             [Assembly.Swap; Assembly.Load; Assembly.Add 1;
+             Assembly.Store;Assembly.Zero; Assembly.Swap]). 
+      now reflexivity.
+  
+      assert (exists q1, eval' q q1).
       admit.
-      destruct H4. remember x as q1.
+      destruct H6. remember x as q1.
       assert (exists q2, eval' q1 q2).
       admit.
-      destruct H5. remember x0 as q2.
+      destruct H7. remember x0 as q2.
       assert (exists q3, eval' q2 q3).
       admit.
-      destruct H6. remember x1 as q3.
+      destruct H8. remember x1 as q3.
       assert (exists q4, eval' q3 q4).
       admit.
-      destruct H7. remember x2 as q4.
+      destruct H9. remember x2 as q4.
       assert (exists q5, eval' q4 q5).
       admit.
-      destruct H8. remember x3 as q5.
+      destruct H10. remember x3 as q5.
       clear Heqq1 Heqq2 Heqq3 Heqq4 Heqq5 x x0 x1 x2 x3.
       apply Common.t_trans with (y := q1). assumption.
       apply Common.t_trans with (y := q2). assumption.
