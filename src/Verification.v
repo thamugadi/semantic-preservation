@@ -82,16 +82,6 @@ Definition len_asm (i : Assembly.instr) : nat :=
   | _ => 0
   end.
 
-Fixpoint to_nat {n} (x : Fin.t n) : nat.
-Proof.
-  destruct x eqn:H.
-  - exact 0.
-  - apply plus.
-    + exact 1.
-    + apply to_nat with (n := n).
-      exact t0.
-Defined.
-
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
 Lemma read_instr_eq {n} : forall p i,
@@ -156,10 +146,10 @@ Qed.
 (* add similar lemmas with multiple read_instr *)
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
-                    to_nat pc0 + 1 = to_nat pc ->
-                    to_nat (Compiler.compile_index prog pc0) +
+                    Common.to_nat pc0 + 1 = Common.to_nat pc ->
+                    Common.to_nat (Compiler.compile_index prog pc0) +
                     vec_len (Compiler.compile_one i 0)
-                    = to_nat (@Compiler.compile_index n prog pc).
+                    = Common.to_nat (@Compiler.compile_index n prog pc).
 Proof.
   intros.
   unfold Language.read_instr' in *.
@@ -173,12 +163,42 @@ Proof.
   - 
 Admitted.
 
-Lemma not_final {n} : forall pc0 prog,
-                     (to_nat pc0) + 1
-                     <> Compiler.comp_len prog ->
-                     exists sqpc, @to_nat (Compiler.comp_len prog) sqpc =
-                     (to_nat (@Compiler.compile_index n prog pc0) + 1).
+Compute (Compiler.compile_index [Language.Jump] Fin.F1).
+
+Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
+  match f in Fin.t n return Fin.t (S n) with
+  | Fin.F1 => Fin.F1
+  | Fin.FS f' => Fin.FS (weaken_fin_t f')
+  end.
+
+Definition safe_fs {n} (i : Fin.t n) (H : (Common.to_nat i) + 1 <> n) : Fin.t n.
+Proof.
 Admitted.
+
+Lemma safe_fs_is_s {n} : forall i H,
+                         @Common.to_nat n (safe_fs i H) = (Common.to_nat i) + 1.
+Admitted. 
+
+
+Lemma not_final_lm1 {n} : forall prog pc pc',
+                          (@Common.to_nat n pc) + 1 = @Common.to_nat n pc' ->
+                          Common.to_nat (Compiler.compile_index prog pc) + 1 <>
+                          Compiler.comp_len prog.
+Admitted.
+
+Lemma not_final {n} : forall pc prog spc,
+                     (Common.to_nat pc) + 1 = @Common.to_nat n spc ->
+                     exists sqpc, @Common.to_nat (Compiler.comp_len prog) sqpc =
+                     (Common.to_nat (@Compiler.compile_index n prog pc) + 1).
+Proof.
+  intros.
+  assert (Common.to_nat (@Compiler.compile_index n prog pc) + 1 
+          <> Compiler.comp_len prog).
+  apply not_final_lm1 with (pc' := spc).
+  assumption.
+  exists (safe_fs (@Compiler.compile_index n prog pc) H0).
+  apply safe_fs_is_s.
+Qed.
 
 Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
@@ -210,7 +230,7 @@ Proof.
        apply read_comp_ptrinc. ssimpl.
        assumption.
       * simpl.
-        unfold to_nat.
+        unfold Common.to_nat.
         apply compiled_pc with (i := Language.PtrInc); assumption.
       * now reflexivity.
       * now reflexivity.
@@ -242,7 +262,6 @@ Proof.
 
       (*Here, we are going to prove the existence of intermediate states to which
         q evaluated to before getting to q' (which is compiled p') *)
-
       assert (exists q1, eval' q q1).
       assert (Assembly.read_instr 
              (@Compiler.compile_link n m {|Language.prog := prog;
@@ -253,11 +272,10 @@ Proof.
       (* easy *) admit.
       rewrite <- Heqq in *.
       assert (exists sqpc,
-              @to_nat (Compiler.comp_len prog) sqpc = (to_nat (Assembly.pc q) + 1)).
+              @Common.to_nat (Compiler.comp_len prog) sqpc =
+              (Common.to_nat (Assembly.pc q) + 1)).
       ssimpl.
-      assert (to_nat pc0 + 1 <> Compiler.comp_len prog).
-      admit. (*TODO*)
-      apply not_final.
+      apply not_final with (spc := pc).
       assumption.
       destruct H7.
       rename x into sqpc.
@@ -265,6 +283,7 @@ Proof.
                                     (sqpc) (Assembly.b q)
                                     (Assembly.ac q)).
       ssimpl.
+      (*TODO: show that q1's current instruction is Load*)
       destruct H6. rename x into q1.
       assert (exists q2, eval' q1 q2).
       admit.

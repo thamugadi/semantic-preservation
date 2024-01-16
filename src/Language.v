@@ -34,15 +34,6 @@ Definition read_mem' {m} (mem : t nat m) (ptr : Fin.t m) : nat := mem[@ptr].
 Inductive read_mem {n m} (p : state) (e : nat) : Prop  :=
   | mi : read_mem' p.(mem n m) p.(ptr n m) = e -> read_mem p e.
 
-Fixpoint to_nat {n} (x : Fin.t n) : nat.
-Proof.
-  destruct x eqn:H.
-  - exact 0.
-  - apply plus.
-    + exact 1.
-    + apply to_nat with (n := n).
-      exact t.
-Defined.
 
 Inductive mem_diff {m} (m1 : t nat m) (m2 : t nat m) (x : Fin.t m) : Prop :=
   | md : (forall i, i <> x -> m2[@i] = m1[@i]) -> mem_diff m1 m2 x. 
@@ -77,27 +68,27 @@ Fixpoint matching_jump' {n} (l : t instr n) (idx : nat) (c : nat)
   end.
 
 Inductive matching_jump {n} (p : program n) (x : Fin.t n) (x' : Fin.t n) : Prop :=
-  | mj : matching_jump' p (to_nat x) 0 None = Some (to_nat x') -> matching_jump p x x'.
+  | mj : matching_jump' p (Common.to_nat x) 0 None = Some (Common.to_nat x') -> matching_jump p x x'.
 Inductive matching_ret {n} (p : program n) (x : Fin.t n) (x' : Fin.t n): Prop :=
-  | mr : matching_ret' p (to_nat x) 0 0 = Some (to_nat x') -> matching_ret p x x'.
+  | mr : matching_ret' p (Common.to_nat x) 0 0 = Some (Common.to_nat x') -> matching_ret p x x'.
 
 (*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
 
 Inductive semantics {n m} (p : state) (p' : state) : Prop :=
-  | ptr_inc : read_instr p PtrInc ->  to_nat p.(ptr) + 1 = to_nat p'.(ptr) ->
-                   to_nat p.(pc n m) + 1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
+  | ptr_inc : read_instr p PtrInc ->  Common.to_nat p.(ptr) + 1 = Common.to_nat p'.(ptr) ->
+                   Common.to_nat p.(pc n m) + 1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
                    p.(mem) = p'.(mem) -> semantics p p'
-  | ptr_dec : read_instr p PtrDec -> to_nat p.(ptr) - 1 = to_nat p'.(ptr) ->
-                    to_nat p.(pc) +1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
+  | ptr_dec : read_instr p PtrDec -> Common.to_nat p.(ptr) - 1 = Common.to_nat p'.(ptr) ->
+                    Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
                    p.(mem) = p'.(mem) -> semantics p p'
   | inc : read_instr p Inc -> p.(ptr) = p'.(ptr) ->
-               to_nat p.(pc) +1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
+               Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
                mem_diff p.(mem) p'.(mem) p.(ptr) ->
                p.(mem)[@p.(ptr)] + 1 = p'.(mem)[@p.(ptr)] ->
                semantics p p'
   | dec : read_instr p Dec -> p.(ptr) = p'.(ptr) ->
-               to_nat p.(pc) +1 = to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
+               Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
                mem_diff p.(mem) p'.(mem) p.(ptr) ->
                p.(mem)[@p.(ptr)] - 1 = p'.(mem)[@p.(ptr)] ->
                semantics p p'
@@ -108,7 +99,7 @@ Inductive semantics {n m} (p : state) (p' : state) : Prop :=
   | jump_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
                    p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                    ~ (read_mem p 0) ->
-                   to_nat p.(pc) + 1 = to_nat p'.(pc)-> semantics p p'
+                   Common.to_nat p.(pc) + 1 = Common.to_nat p'.(pc)-> semantics p p'
   | ret_z :  read_instr p Ret -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   matching_jump p.(prog) p.(pc) p'.(pc) -> read_mem p 0 ->
@@ -116,5 +107,5 @@ Inductive semantics {n m} (p : state) (p' : state) : Prop :=
   | ret_nz : read_instr p Ret -> p.(ptr) = p'.(ptr) ->
                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
                   ~ (read_mem p 0) ->
-                  to_nat p.(pc) +  1 = to_nat p'.(pc) -> semantics p p'.
+                  Common.to_nat p.(pc) +  1 = Common.to_nat p'.(pc) -> semantics p p'.
 End Language.

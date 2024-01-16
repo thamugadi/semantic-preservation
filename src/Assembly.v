@@ -41,15 +41,6 @@ Inductive read_mem {n m} (p : state) (e : nat) : Prop  :=
 Inductive mem_diff {m} (m1 : t nat m) (m2 : t nat m) (x : Fin.t m) : Prop :=
   | md : (forall i, i <> x -> m2[@i] = m1[@i]) -> mem_diff m1 m2 x. 
 
-Fixpoint to_nat {n} (x : Fin.t n) : nat.
-Proof.
-  destruct x eqn:H.
-  - exact 0.
-  - apply plus.
-    + exact 1.
-    + apply to_nat with (n := n).
-      exact t.
-Defined.
 
 Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   match f in Fin.t n return Fin.t (S n) with
@@ -60,40 +51,40 @@ Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
 (* Small-step operational semantics for our target language.*)
 
 Inductive semantics {n m} (p : state) (p' : state) : Prop :=
-  | load : read_instr p (Load) ->  to_nat p.(pc n m) + 1 = to_nat p'.(pc)->
+  | load : read_instr p (Load) ->  Common.to_nat p.(pc n m) + 1 = Common.to_nat p'.(pc)->
              p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) -> p.(b) = p'.(b) ->
-             to_nat p'.(ac) = (read_mem' p.(mem) p.(b)) -> semantics p p'
-  | store: read_instr p (Store) -> to_nat p.(pc) + 1 = to_nat p'.(pc) ->
+             Common.to_nat p'.(ac) = (read_mem' p.(mem) p.(b)) -> semantics p p'
+  | store: read_instr p (Store) -> Common.to_nat p.(pc) + 1 = Common.to_nat p'.(pc) ->
            p.(prog) = p'.(prog) -> p.(ac) = p'.(ac) ->
-           to_nat p.(ac) = read_mem' p'.(mem) p.(ac) -> p.(b) = p'.(b) ->
+           Common.to_nat p.(ac) = read_mem' p'.(mem) p.(ac) -> p.(b) = p'.(b) ->
            mem_diff p.(mem) p'.(mem) p.(b) -> semantics p p'
-  | add : forall n', read_instr p (Add n') -> to_nat p.(pc) + 1 =
-              to_nat p'.(pc) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-              p.(b) = p'.(b) -> to_nat p'.(ac) = to_nat (p.(ac)) + n' ->
+  | add : forall n', read_instr p (Add n') -> Common.to_nat p.(pc) + 1 =
+              Common.to_nat p'.(pc) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
+              p.(b) = p'.(b) -> Common.to_nat p'.(ac) = Common.to_nat (p.(ac)) + n' ->
               semantics p p'
-  | sub : forall n', read_instr p (Sub n') -> to_nat p.(pc) + 1 = 
-              to_nat p'.(pc) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-              p.(b) = p'.(b) -> to_nat p'.(ac) = (to_nat p.(ac)) - n' ->
+  | sub : forall n', read_instr p (Sub n') -> Common.to_nat p.(pc) + 1 = 
+              Common.to_nat p'.(pc) -> p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
+              p.(b) = p'.(b) -> Common.to_nat p'.(ac) = (Common.to_nat p.(ac)) - n' ->
               semantics p p'
   | jump : forall n', read_instr p (Jump n') -> p.(prog) = p'.(prog) ->
-               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> to_nat (p'.(pc)) =
+               p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> Common.to_nat (p'.(pc)) =
                n'+1 -> p.(b) = p'.(b) -> semantics p p'
   | skipz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
-               read_mem p 0 -> to_nat (p'.(pc)) = to_nat (p.(pc)) + 2 ->
+               read_mem p 0 -> Common.to_nat (p'.(pc)) = Common.to_nat (p.(pc)) + 2 ->
                semantics p p'
   | skipnz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                 p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
-                ~ (read_mem p 0) -> to_nat p'.(pc) = (to_nat p.(pc)) + 1 ->
+                ~ (read_mem p 0) -> Common.to_nat p'.(pc) = (Common.to_nat p.(pc)) + 1 ->
                 semantics p p'
   | swap : read_instr p (Swap) -> p.(prog) =
            p'.(prog) -> p.(mem) = p'.(mem) ->
-           p.(ac) = p'.(b) -> p.(b) = p'.(ac) -> to_nat p'.(pc) =
-           (to_nat p.(pc)) + 1 ->
+           p.(ac) = p'.(b) -> p.(b) = p'.(ac) -> Common.to_nat p'.(pc) =
+           (Common.to_nat p.(pc)) + 1 ->
            semantics p p'
   | zero : read_instr p (Zero) -> p.(prog) =
            p'.(prog) -> p.(mem) = p'.(mem) ->
-           p'.(b) = p.(b) -> 0 = to_nat p'.(ac) -> to_nat p'.(pc) =
-           (to_nat p.(pc)) + 1 ->
+           p'.(b) = p.(b) -> 0 = Common.to_nat p'.(ac) -> Common.to_nat p'.(pc) =
+           (Common.to_nat p.(pc)) + 1 ->
            semantics p p'.
 End Assembly.

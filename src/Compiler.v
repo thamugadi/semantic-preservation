@@ -158,7 +158,7 @@ Fixpoint link_jump' {n ln ln'} (p : Assembly.program n)
                   | [] => p
                   | r :: rets' => link_jump' 
                                   (replace p a (Assembly.Jump 
-                                  (Assembly.to_nat r)))
+                                  (Common.to_nat r)))
                                   jumps' rets'
                   end
   end.
@@ -204,7 +204,7 @@ Fixpoint link_ret' {n ln ln'} (p : Assembly.program n)
   | a :: rets' => match jumps with
                   | [] => p
                   | r :: jumps' => link_ret' (replace p a 
-                                   (Assembly.Jump (Assembly.to_nat r)))
+                                   (Assembly.Jump (Common.to_nat r)))
                                    jumps' rets'
                   end
   end.
