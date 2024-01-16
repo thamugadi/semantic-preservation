@@ -19,6 +19,12 @@ Proof.
   apply rt_refl.
 Qed.
 
+Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
+Proof.
+  destruct x eqn:H1.
+  - unfold not in H. assert (0 = 0). reflexivity. contradiction.
+  - exact Fin.F1.
+Defined.
 
 Fixpoint to_nat {n} (x : Fin.t n) : nat.
 Proof.

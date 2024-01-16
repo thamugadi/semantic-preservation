@@ -105,7 +105,6 @@ Proof.
 Qed.
 
 (*todo: prove another lemma generalizing this one for N compiled instructions*)
-(*todo: find a lemma as general as read_instr_eq for link*)
 
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
@@ -154,11 +153,31 @@ Proof.
   assumption.
 Qed.
 
+(* add similar lemmas with multiple read_instr *)
+
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
-                    Common.to_nat pc0 + 1 = Common.to_nat pc ->
-                    Common.to_nat (Compiler.compile_index prog pc0) +
+                    to_nat pc0 + 1 = to_nat pc ->
+                    to_nat (Compiler.compile_index prog pc0) +
                     vec_len (Compiler.compile_one i 0)
-                    = Common.to_nat (@Compiler.compile_index n prog pc).
+                    = to_nat (@Compiler.compile_index n prog pc).
+Proof.
+  intros.
+  unfold Language.read_instr' in *.
+  unfold vec_len.
+  unfold Compiler.comp_len.
+  simpl.
+  induction pc.
+  - exfalso.
+    inversion H0.
+    lia.
+  - 
+Admitted.
+
+Lemma not_final {n} : forall pc0 prog,
+                     (to_nat pc0) + 1
+                     <> Compiler.comp_len prog ->
+                     exists sqpc, @to_nat (Compiler.comp_len prog) sqpc =
+                     (to_nat (@Compiler.compile_index n prog pc0) + 1).
 Admitted.
 
 Theorem comp_correct {n m : nat} :
@@ -191,7 +210,7 @@ Proof.
        apply read_comp_ptrinc. ssimpl.
        assumption.
       * simpl.
-        unfold Common.to_nat.
+        unfold to_nat.
         apply compiled_pc with (i := Language.PtrInc); assumption.
       * now reflexivity.
       * now reflexivity.
@@ -220,32 +239,54 @@ Proof.
              [Assembly.Swap; Assembly.Load; Assembly.Add 1;
              Assembly.Store;Assembly.Zero; Assembly.Swap]). 
       now reflexivity.
-  
+
+      (*Here, we are going to prove the existence of intermediate states to which
+        q evaluated to before getting to q' (which is compiled p') *)
+
       assert (exists q1, eval' q q1).
-      admit.
-      destruct H6. remember x as q1.
+      assert (Assembly.read_instr 
+             (@Compiler.compile_link n m {|Language.prog := prog;
+                                           Language.mem := mem0;
+                                           Language.pc := pc0;
+                                           Language.ptr := ptr|} H2 H3)
+                                           (Assembly.Swap)).
+      (* easy *) admit.
+      rewrite <- Heqq in *.
+      assert (exists sqpc,
+              @to_nat (Compiler.comp_len prog) sqpc = (to_nat (Assembly.pc q) + 1)).
+      ssimpl.
+      assert (to_nat pc0 + 1 <> Compiler.comp_len prog).
+      admit. (*TODO*)
+      apply not_final.
+      assumption.
+      destruct H7.
+      rename x into sqpc.
+      exists (Assembly.mkState _ _  (Assembly.prog q) (Assembly.mem q)
+                                    (sqpc) (Assembly.b q)
+                                    (Assembly.ac q)).
+      ssimpl.
+      destruct H6. rename x into q1.
       assert (exists q2, eval' q1 q2).
       admit.
-      destruct H7. remember x0 as q2.
+      destruct H7. rename x into q2.
       assert (exists q3, eval' q2 q3).
       admit.
-      destruct H8. remember x1 as q3.
+      destruct H8. rename x into q3.
       assert (exists q4, eval' q3 q4).
       admit.
-      destruct H9. remember x2 as q4.
+      destruct H9. rename x into q4.
       assert (exists q5, eval' q4 q5).
       admit.
-      destruct H10. remember x3 as q5.
-      clear Heqq1 Heqq2 Heqq3 Heqq4 Heqq5 x x0 x1 x2 x3.
+      destruct H10. rename x into q5.
       apply Common.t_trans with (y := q1). assumption.
       apply Common.t_trans with (y := q2). assumption.
       apply Common.t_trans with (y := q3). assumption.
       apply Common.t_trans with (y := q4). assumption.
       apply Common.t_trans with (y := q5). assumption.
       apply Common.t_base. admit.
-    + (*assert the existence of q1,q2,q3,q4,q5*) admit.
+    + (*same proof as before*) admit.
 
-    (* will require other lemmas than read_comp: *)
+    (* will require other lemmas, as we will have to consider linking: *)
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
