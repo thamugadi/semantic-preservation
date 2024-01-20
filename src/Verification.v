@@ -99,50 +99,29 @@ Qed.
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
 Admitted.
-  
-Lemma read_comp_ptrinc {n m} : forall p H1 H2, Language.read_instr p Language.PtrInc ->
-                               Assembly.read_instr
-                              (@Compiler.compile_link n m p H1 H2) (Assembly.Add 1).
-Proof.
-  unfold Compiler.compile_link.
-  unfold Compiler.compile'.
-  intros.
-  ssimpl.
-  unfold Language.read_instr' in H0.
-  apply Assembly.ri.
-  unfold Assembly.read_instr'. simpl.
-  assert ((Compiler.compile'' prog)[@Compiler.compile_index prog pc] =
-  @Compiler.compile_first n prog[@pc]).
-  apply read_instr_eq.
-  rewrite H0 in H.
-  simpl in H.
-  apply link_stable.
-  split; discriminate.
-  assumption.
-Qed.
-  
-  
-Lemma read_comp_ptrdec {n m} : forall p H1 H2, Language.read_instr p Language.PtrDec ->
-                               Assembly.read_instr (@Compiler.compile_link n m p H1 H2)
-                               (Assembly.Sub 1).
-Proof.
-  unfold Compiler.compile_link.
-  unfold Compiler.compile'.
-  intros.
-  ssimpl.
-  unfold Language.read_instr' in H0.
-  apply Assembly.ri.
-  unfold Assembly.read_instr'. simpl.
-  assert ((Compiler.compile'' prog)[@Compiler.compile_index prog pc] =
-  @Compiler.compile_first n prog[@pc]).
-  apply read_instr_eq.
-  rewrite H0 in H.
-  simpl in H.
-  apply link_stable.
-  split; discriminate.
-  assumption.
-Qed.
 
+Lemma read_comp {n m} : forall p i H1 H2, Language.read_instr p i ->
+                               i <> Language.Jump -> i <> Language.Ret ->
+                               Assembly.read_instr (@Compiler.compile_link n m p H1 H2)
+                               (@Compiler.compile_first n i).
+Proof.
+  unfold Compiler.compile_link.
+  unfold Compiler.compile'.
+  intros.
+  ssimpl.
+  apply Assembly.ri.
+  unfold Assembly.read_instr'. simpl.
+  assert ((Compiler.compile'' prog)[@Compiler.compile_index prog pc] =
+  @Compiler.compile_first n prog[@pc]).
+  apply read_instr_eq.
+  apply link_stable.
+  ssimpl.
+  - unfold Compiler.compile_first in H4.
+    qsimpl.
+  - unfold Compiler.compile_first in H4.
+    qsimpl.
+  - qsimpl.
+Qed.
 (* add similar lemmas with multiple read_instr *)
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
@@ -227,7 +206,8 @@ Proof.
        Language.mem := mem;
        Language.pc := pc0;
        Language.ptr := ptr0|} H2 H3) (Assembly.Add 1)).
-       apply read_comp_ptrinc. ssimpl.
+       apply read_comp with (i := Language.PtrInc). ssimpl.
+       discriminate. discriminate.
        assumption.
       * simpl.
         unfold Common.to_nat.
@@ -242,7 +222,8 @@ Proof.
        Language.mem := mem;
        Language.pc := pc0;
        Language.ptr := ptr0|} H2 H3) (Assembly.Sub 1)).
-       apply read_comp_ptrdec. ssimpl.
+       apply read_comp with (i := Language.PtrDec). ssimpl.
+       discriminate. discriminate.
        assumption.
       * simpl.
         apply compiled_pc with (i := Language.PtrDec); assumption.
@@ -260,16 +241,19 @@ Proof.
              Assembly.Store;Assembly.Zero; Assembly.Swap]). 
       now reflexivity.
 
-      (*Here, we are going to prove the existence of intermediate states to which
-        q evaluated to before getting to q' (which is compiled p') *)
-      assert (exists q1, eval' q q1).
       assert (Assembly.read_instr 
              (@Compiler.compile_link n m {|Language.prog := prog;
                                            Language.mem := mem0;
                                            Language.pc := pc0;
                                            Language.ptr := ptr|} H2 H3)
                                            (Assembly.Swap)).
-      (* easy *) admit.
+      apply read_comp with (i := Language.Inc).
+      ssimpl.
+      discriminate. discriminate.
+
+      (*Here, we are going to prove the existence of intermediate states to which
+        q evaluated to before getting to q' (which is compiled p') *)
+      assert (exists q1, eval' q q1).
       rewrite <- Heqq in *.
       assert (exists sqpc,
               @Common.to_nat (Compiler.comp_len prog) sqpc =
@@ -283,26 +267,50 @@ Proof.
                                     (sqpc) (Assembly.b q)
                                     (Assembly.ac q)).
       ssimpl.
-      (*TODO: show that q1's current instruction is Load*)
-      destruct H6. rename x into q1.
+      destruct H7; rename x into q1.
+      assert (Assembly.read_instr q1 Assembly.Load).
+      admit.
       assert (exists q2, eval' q1 q2).
       admit.
-      destruct H7. rename x into q2.
+      destruct H9; rename x into q2.
+      assert (Assembly.read_instr q2 (Assembly.Add 1)).
+      admit.
       assert (exists q3, eval' q2 q3).
       admit.
-      destruct H8. rename x into q3.
+      destruct H11; rename x into q3.
+      assert (Assembly.read_instr q3 Assembly.Store).
+      admit.
       assert (exists q4, eval' q3 q4).
       admit.
-      destruct H9. rename x into q4.
+      destruct H13; rename x into q4.
+      assert (Assembly.read_instr q4 Assembly.Zero).
+      admit.
       assert (exists q5, eval' q4 q5).
       admit.
-      destruct H10. rename x into q5.
+      destruct H15; rename x into q5.
+      assert (Assembly.read_instr q5 Assembly.Swap).
+      admit.
       apply Common.t_trans with (y := q1). assumption.
       apply Common.t_trans with (y := q2). assumption.
       apply Common.t_trans with (y := q3). assumption.
       apply Common.t_trans with (y := q4). assumption.
       apply Common.t_trans with (y := q5). assumption.
-      apply Common.t_base. admit.
+      apply Common.t_base.
+      apply Assembly.swap.
+      * assumption.
+      * assert (Assembly.prog q = Assembly.prog q').
+        ssimpl.
+        assert (Assembly.prog q1 = Assembly.prog q). inversion H7; qsimpl.
+        assert (Assembly.prog q2 = Assembly.prog q1). inversion H9; qsimpl.
+        assert (Assembly.prog q3 = Assembly.prog q2). inversion H11; qsimpl.
+        assert (Assembly.prog q4 = Assembly.prog q3). inversion H13; qsimpl.
+        assert (Assembly.prog q5 = Assembly.prog q4). inversion H15; qsimpl.
+        qsimpl.
+      * admit.
+      * admit.
+      * admit.
+      * admit.
+
     + (*same proof as before*) admit.
 
     (* will require other lemmas, as we will have to consider linking: *)
