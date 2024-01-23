@@ -102,3 +102,6 @@ Defined.
 Theorem th : forall {n} (x : Fin.t n) (p : Vector.t instr1 n) (HA : n <> 0),
   @comp_instr (comp_len p) (lm1 n p HA) p[@x] = (@compile n p HA)[@compile_index p x].
 Admitted.
+
+
+

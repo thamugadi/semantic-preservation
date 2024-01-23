@@ -179,6 +179,22 @@ Proof.
   apply safe_fs_is_s.
 Qed.
 
+Lemma seq_inc1 {n m}: forall p q1 H H',
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
+                     (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     eval' (@Compiler.compile_link n m p H H') q1 ->
+                     Assembly.read_instr q1 Assembly.Load.
+Proof.
+  intros.
+  apply Assembly.ri.
+  unfold Assembly.read_instr'.
+  inversion H0.
+  unfold Assembly.read_instr' in H3.
+  remember (Compiler.compile_link p H H') as q.  
+Admitted.
+
+
+
 Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
@@ -252,7 +268,7 @@ Proof.
       discriminate. discriminate.
 
       (*Here, we are going to prove the existence of intermediate states to which
-        q evaluated to before getting to q' (which is compiled p') *)
+        q is evaluated to before getting to q' (which is compiled p') *)
       assert (exists q1, eval' q q1).
       rewrite <- Heqq in *.
       assert (exists sqpc,
@@ -261,8 +277,7 @@ Proof.
       ssimpl.
       apply not_final with (spc := pc).
       assumption.
-      destruct H7.
-      rename x into sqpc.
+      destruct H7; rename x into sqpc.
       exists (Assembly.mkState _ _  (Assembly.prog q) (Assembly.mem q)
                                     (sqpc) (Assembly.b q)
                                     (Assembly.ac q)).
