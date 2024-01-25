@@ -65,20 +65,6 @@ Fixpoint compile'' {n} (p : Language.program n) :
   | Language.Halt :: h => Assembly.Halt   :: compile'' h
   end.
 
-Definition compile_one (i : Language.instr) (n : nat)
-                       : @Assembly.program (comp_len [i]) :=
-  match i with
-  | Language.PtrInc => [Assembly.Add 1]
-  | Language.PtrDec => [Assembly.Sub 1]
-  | Language.Inc => [Assembly.Swap; Assembly.Load; Assembly.Add 1;
-                     Assembly.Store; Assembly.Zero; Assembly.Swap]
-  | Language.Dec => [Assembly.Swap; Assembly.Load; Assembly.Sub 1;
-                     Assembly.Store; Assembly.Zero; Assembly.Swap]
-  | Language.Jump => [Assembly.Skip; Assembly.Jump n]
-  | Language.Ret => [Assembly.Skip; Assembly.Jump n]
-  | Language.Halt => [Assembly.Halt]
-  end.
-
 Definition compile_first {n : nat} (i : Language.instr) : Assembly.instr :=
   match i with
   | Language.PtrInc => Assembly.Add 1

@@ -127,7 +127,7 @@ Qed.
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
                     Common.to_nat pc0 + 1 = Common.to_nat pc ->
                     Common.to_nat (Compiler.compile_index prog pc0) +
-                    vec_len (Compiler.compile_one i 0)
+                    vec_len (Compiler.compile'' [i])
                     = Common.to_nat (@Compiler.compile_index n prog pc).
 Proof.
   intros.
@@ -179,18 +179,20 @@ Proof.
   apply safe_fs_is_s.
 Qed.
 
+Theorem seq {n} : forall p q x x' i 
+                  (off : Fin.t (vec_len (Compiler.compile'' [i]))),
+                  q = Compiler.compile'' p -> p[@x] = i ->
+                  Common.to_nat x' =
+                  Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
+                  q[@x'] = (Compiler.compile'' [i])[@off].
+Admitted.
+
+(*particular form of seq*)
 Lemma seq_inc1 {n m}: forall p q1 H H',
                      Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
                      eval' (@Compiler.compile_link n m p H H') q1 ->
                      Assembly.read_instr q1 Assembly.Load.
-Proof.
-  intros.
-  apply Assembly.ri.
-  unfold Assembly.read_instr'.
-  inversion H0.
-  unfold Assembly.read_instr' in H3.
-  remember (Compiler.compile_link p H H') as q.  
 Admitted.
 
 
@@ -252,9 +254,9 @@ Proof.
       remember (Compiler.compile_link {|Language.prog := prog;Language.mem := mem;
                Language.pc := pc; Language.ptr := ptr|} H0 H1) as q'.
       assert (prog[@pc0] = Language.Inc). ssimpl.
-      assert (Compiler.compile_one Language.Inc 0 =
+      assert (Compiler.compile'' [Language.Inc] =
              [Assembly.Swap; Assembly.Load; Assembly.Add 1;
-             Assembly.Store;Assembly.Zero; Assembly.Swap]). 
+             Assembly.Store;Assembly.Zero; Assembly.Swap]).
       now reflexivity.
 
       assert (Assembly.read_instr 

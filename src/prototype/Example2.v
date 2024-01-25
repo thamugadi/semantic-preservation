@@ -3,6 +3,7 @@ Import Vector.VectorNotations.
 Require Import Program.Equality.
 Require Import Coq.Program.Wf.
 From Hammer Require Import Tactics.
+From Hammer Require Import Hammer.
 Require Import Lia.
 
 Inductive instr1 : Type :=
@@ -49,8 +50,10 @@ Proof.
       exact t.
 Defined.
 
-(* need to generalize this. *)
+Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Theorem th {n} : forall p q x x', q = @compile n p -> p[@x] = B ->
-                 to_nat x' = to_nat (@compile_index n p x) + 1 ->
-                 q[@x'] = B'.
+Theorem th2 {n} : forall p q x x' i (off : Fin.t (vec_len (compile [i]))),
+                  q = compile p -> p[@x] = i ->
+                  to_nat x' = to_nat (@compile_index n p x) + to_nat off ->
+                  q[@x'] = (compile [i])[@off].
+Admitted.
