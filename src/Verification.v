@@ -179,12 +179,12 @@ Proof.
   apply safe_fs_is_s.
 Qed.
 
-Theorem seq {n} : forall p q x x' i 
-                  (off : Fin.t (vec_len (Compiler.compile'' [i]))),
-                  q = Compiler.compile'' p -> p[@x] = i ->
+Theorem seq {n} : forall p x x' i 
+                  (off : Fin.t (Compiler.comp_len ([i]))),
+                  p[@x] = i ->
                   Common.to_nat x' =
                   Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
-                  q[@x'] = (Compiler.compile'' [i])[@off].
+                  (Compiler.compile'' p)[@x'] = (Compiler.compile'' [i])[@off].
 Admitted.
 
 (*particular form of seq*)

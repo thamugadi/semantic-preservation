@@ -52,8 +52,69 @@ Defined.
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
-Theorem th2 {n} : forall p q x x' i (off : Fin.t (vec_len (compile [i]))),
-                  q = compile p -> p[@x] = i ->
+Definition compile_first (i : instr1) : instr2 :=
+  match i with
+  | A => A'
+  | B => C'
+  end.
+
+Lemma read_instr_eq {n} : forall p x,
+                          (compile p)[@@compile_index n p x] = @compile_first p[@x].
+Proof.
+  intros.
+  induction x; dependent destruction p;
+  destruct h; simpl;
+  try (now reflexivity);
+  try (apply IHx).
+Qed.
+
+Lemma to_nat_st {n} : forall a b, @to_nat n a = to_nat b -> a = b.
+Proof.
+  intros.
+  dependent induction a; dependent destruction b.
+  reflexivity.
+  assert (n = 0). ssimpl. exfalso. ssimpl.
+  assert (n = 0). ssimpl. exfalso. ssimpl.
+  f_equal.
+  apply IHa.
+  inversion H.
+  reflexivity.
+Qed.
+
+Lemma to_nat_z {n} : forall a, to_nat a = 0 -> a = @Fin.F1 n.
+Proof.
+  intros.
+  dependent destruction a.
+  reflexivity.
+  exfalso.
+  inversion H.
+Qed.
+
+Theorem th {n} : forall p x x' i (off : Fin.t (comp_len [i])),
+                  p[@x] = i ->
                   to_nat x' = to_nat (@compile_index n p x) + to_nat off ->
-                  q[@x'] = (compile [i])[@off].
+                  (compile p)[@x'] = (compile [i])[@off].
+Proof.
+  intros.
+  destruct i; dependent destruction off.
+  - simpl in *.
+    assert (x' = compile_index p x). apply to_nat_st. lia.
+    rewrite H1.
+    assert (A' = compile_first p[@x]). rewrite H. now reflexivity.
+    rewrite H2.
+    apply read_instr_eq.
+  - inversion off.
+  - simpl in *.
+    assert (x' = compile_index p x). apply to_nat_st. lia.
+    rewrite H1.
+    assert (C' = compile_first p[@x]). rewrite H. now reflexivity.
+    rewrite H2.
+    apply read_instr_eq.
+  - dependent destruction off.
+    + simpl in *.
+      admit.
+    + dependent destruction off.
+      * simpl in *.
+        admit.
+      * inversion off.
 Admitted.
