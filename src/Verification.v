@@ -94,11 +94,22 @@ Proof.
   try (apply IHi).
 Qed.
 
-(*todo: prove another lemma generalizing this one for N compiled instructions*)
+Lemma link_stable_1 : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
+                      p[@ind] = i -> (@Compiler.link_jump n p)[@ind] = i.
+Admitted.
+Lemma link_stable_2 : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
+                      p[@ind] = i -> (@Compiler.link_ret n p)[@ind] = i.
+Admitted.
 
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
-Admitted.
+Proof.
+  intros. unfold Compiler.link.
+  rewrite link_stable_2 with (i := i).
+  reflexivity.
+  assumption.
+  apply link_stable_1; assumption.
+Qed.
 
 Lemma read_comp {n m} : forall p i H1 H2, Language.read_instr p i ->
                                i <> Language.Jump -> i <> Language.Ret ->
@@ -122,27 +133,28 @@ Proof.
     qsimpl.
   - qsimpl.
 Qed.
-(* add similar lemmas with multiple read_instr *)
 
-Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
-                    Common.to_nat pc0 + 1 = Common.to_nat pc ->
-                    Common.to_nat (Compiler.compile_index prog pc0) +
-                    vec_len (Compiler.compile'' [i])
-                    = Common.to_nat (@Compiler.compile_index n prog pc).
+Lemma to_nat_st {n} : forall a b, @Common.to_nat n a = Common.to_nat b -> a = b.
 Proof.
   intros.
-  unfold Language.read_instr' in *.
-  unfold vec_len.
-  unfold Compiler.comp_len.
-  simpl.
-  induction pc.
-  - exfalso.
-    inversion H0.
-    lia.
-  - 
-Admitted.
+  dependent induction a; dependent destruction b.
+  reflexivity.
+  assert (n = 0). ssimpl. exfalso. ssimpl.
+  assert (n = 0). ssimpl. exfalso. ssimpl.
+  f_equal.
+  apply IHa.
+  inversion H.
+  reflexivity.
+Qed.
 
-Compute (Compiler.compile_index [Language.Jump] Fin.F1).
+Lemma to_nat_st_r {n} : forall a b, a = b -> @Common.to_nat n a = Common.to_nat b.
+Proof.
+  intros.
+  dependent induction a; sauto.
+Qed.
+
+
+(* add similar lemmas with multiple read_instr *)
 
 Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   match f in Fin.t n return Fin.t (S n) with
@@ -152,19 +164,50 @@ Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
 
 Definition safe_fs {n} (i : Fin.t n) (H : (Common.to_nat i) + 1 <> n) : Fin.t n.
 Proof.
-Admitted.
+  intros.
+  destruct n. inversion i.
+  pose (X := Fin.of_nat (Common.to_nat i + 1) (S n)).
+  destruct X eqn:A.
+  exact t0.
+  sfirstorder.
+Defined.
+
+Lemma fs_lm : forall n i, @Common.to_nat n i <> n.
+Proof.
+  intros.
+  induction i, n.
+  - simpl. lia.
+  - simpl. lia.
+  - inversion i.
+  - sfirstorder.
+Qed.
 
 Lemma safe_fs_is_s {n} : forall i H,
                          @Common.to_nat n (safe_fs i H) = (Common.to_nat i) + 1.
-Admitted. 
-
-
+Proof.
+  intros.
+  induction i, n.
+  - simpl in H. lia.
+  - now reflexivity.
+  - inversion i.
+  - hauto.
+Qed.
+(*todo : minus *)
+(*todo : strengthen*)
 Lemma not_final_lm1 {n} : forall prog pc pc',
                           (@Common.to_nat n pc) + 1 = @Common.to_nat n pc' ->
                           Common.to_nat (Compiler.compile_index prog pc) + 1 <>
                           Compiler.comp_len prog.
-Admitted.
-
+Proof.
+  intros. 
+  assert (Common.to_nat pc' <> n).
+  apply fs_lm.
+  rewrite <- H in H0.
+  unfold not; intros.
+  induction prog.
+  inversion pc.
+  (* on pose pc' -' 1 et on renforce pc grâce à H0, puis on invoque IHprog *)
+Admitted. 
 Lemma not_final {n} : forall pc prog spc,
                      (Common.to_nat pc) + 1 = @Common.to_nat n spc ->
                      exists sqpc, @Common.to_nat (Compiler.comp_len prog) sqpc =
@@ -179,24 +222,55 @@ Proof.
   apply safe_fs_is_s.
 Qed.
 
-Theorem seq {n} : forall p x x' i 
-                  (off : Fin.t (Compiler.comp_len ([i]))),
-                  p[@x] = i ->
+
+
+Theorem seq_instr {n} : forall p x x'
+                  (off : Fin.t (Compiler.comp_len ([p[@x]]))),
                   Common.to_nat x' =
                   Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
-                  (Compiler.compile'' p)[@x'] = (Compiler.compile'' [i])[@off].
+                  (Compiler.compile'' p)[@x'] = (Compiler.compile'' [p[@x]])[@off].
 Admitted.
 
-(*particular form of seq*)
+
+Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
+                    Common.to_nat pc0 + 1 = Common.to_nat pc ->
+                    Common.to_nat (Compiler.compile_index prog pc0) +
+                    vec_len (Compiler.compile'' [i])
+                    = Common.to_nat (@Compiler.compile_index n prog pc).
+Proof. (* maybe related to precedent *)
+Admitted.
+
+(*particular form of seq_instr*)
 Lemma seq_inc1 {n m}: forall p q1 H H',
-                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
                      eval' (@Compiler.compile_link n m p H H') q1 ->
                      Assembly.read_instr q1 Assembly.Load.
-Admitted.
-
-
-
+Proof.
+  intros.
+  ssimpl.
+  apply Assembly.ri.
+  simpl.
+  unfold Assembly.read_instr'.
+  cut ((Compiler.compile'' prog)[@pc] = Assembly.Load).
+  intros.
+  apply link_stable.
+  ssimpl.
+  assumption.
+  assert (Compiler.comp_len [prog[@pc0]] <> 0).
+  ssimpl.
+  assert (1 < Compiler.comp_len [prog[@pc0]]). ssimpl.
+  pose (X := Common.make_fn (Compiler.comp_len [prog[@pc0]]) 1 H1).
+  assert ((Compiler.compile'' prog)[@pc] = (Compiler.compile'' [prog[@pc0]])[@X]).
+  apply seq_instr.
+  assert (Common.to_nat X = 1).
+  sauto.
+  rewrite H4.
+  assumption.
+  rewrite H4.
+  sauto.
+Qed. 
+  
 Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 

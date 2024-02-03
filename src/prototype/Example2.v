@@ -5,6 +5,7 @@ Require Import Coq.Program.Wf.
 From Hammer Require Import Tactics.
 From Hammer Require Import Hammer.
 Require Import Lia.
+Require Import Classical.
 
 Inductive instr1 : Type :=
   | A : instr1
@@ -40,15 +41,12 @@ Proof.
   - do 3 apply Fin.FS. apply compile_index. exact t.
 Defined.
 
-Fixpoint to_nat {n} (x : Fin.t n) : nat.
-Proof.
-  destruct x eqn:H.
-  - exact 0.
-  - apply plus.
-    + exact 1.
-    + apply to_nat with (n := n).
-      exact t.
-Defined.
+Fixpoint to_nat {n} (x : Fin.t n) : nat :=
+  match x with
+  | Fin.F1 => 0
+  | Fin.FS t => 1 + (to_nat t)
+  end.
+
 
 Definition vec_len {A n} (v : Vector.t A n) : nat := n.
 
@@ -80,41 +78,38 @@ Proof.
   inversion H.
   reflexivity.
 Qed.
+Require Import Coq.Arith.Arith_base.
 
-Lemma to_nat_z {n} : forall a, to_nat a = 0 -> a = @Fin.F1 n.
+Definition fint_plus {n m} (a : Fin.t n) (b : Fin.t m) : Fin.t (n + m).
 Proof.
-  intros.
-  dependent destruction a.
-  reflexivity.
-  exfalso.
-  inversion H.
-Qed.
+  induction a.
+  * induction b.
+    ** exact Fin.F1.
+    ** rewrite Nat.add_comm. cbn. apply Fin.FS. rewrite Nat.add_comm. assumption.
+  * cbn. apply Fin.FS. assumption.
+Defined.
 
-Theorem th {n} : forall p x x' i (off : Fin.t (comp_len [i])),
-                  p[@x] = i ->
-                  to_nat x' = to_nat (@compile_index n p x) + to_nat off ->
-                  (compile p)[@x'] = (compile [i])[@off].
-Proof.
-  intros.
-  destruct i; dependent destruction off.
-  - simpl in *.
-    assert (x' = compile_index p x). apply to_nat_st. lia.
-    rewrite H1.
-    assert (A' = compile_first p[@x]). rewrite H. now reflexivity.
-    rewrite H2.
-    apply read_instr_eq.
-  - inversion off.
-  - simpl in *.
-    assert (x' = compile_index p x). apply to_nat_st. lia.
-    rewrite H1.
-    assert (C' = compile_first p[@x]). rewrite H. now reflexivity.
-    rewrite H2.
-    apply read_instr_eq.
-  - dependent destruction off.
-    + simpl in *.
-      admit.
-    + dependent destruction off.
-      * simpl in *.
-        admit.
-      * inversion off.
+Lemma ci_le {n} : forall p x, to_nat (@compile_index n p x) <
+                              comp_len p - vec_len (compile [p[@x]]) + 1.
 Admitted.
+
+Definition safe_plus {n m} (a : Fin.t n) (b : Fin.t m)
+                           (H : (to_nat a) + (to_nat b) < n) : Fin.t n.
+Admitted.
+
+Lemma safe_plus_is_plus {n m} : forall a b H,
+                                @to_nat n (safe_plus a b H) =
+                                (to_nat a) + (@to_nat m b).
+Admitted. 
+
+Require Import Coq.Vectors.VectorDef.
+
+Fixpoint drop_fill {n a} (p : t a n) (f : a) (i : nat) : t a n.
+Admitted.
+
+Theorem th {n} :  forall p x x' (off : Fin.t (comp_len [p[@x]])),
+                  to_nat x' = to_nat (@compile_index n p x) + to_nat off ->
+                  (compile p)[@x'] = (compile [p[@x]])[@off].
+Proof.
+  intros.
+  

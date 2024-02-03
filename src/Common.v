@@ -19,13 +19,6 @@ Proof.
   apply rt_refl.
 Qed.
 
-Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
-Proof.
-  destruct x eqn:H1.
-  - unfold not in H. assert (0 = 0). reflexivity. contradiction.
-  - exact Fin.F1.
-Defined.
-
 Fixpoint to_nat {n} (x : Fin.t n) : nat.
 Proof.
   destruct x eqn:H.
@@ -35,6 +28,19 @@ Proof.
     + apply to_nat with (n := n).
       exact t.
 Defined.
+
+Definition make_f1 (n : nat) (H : n <> 0) : Fin.t n.
+Proof.
+  destruct n eqn:H1.
+  - unfold not in H. assert (0 = 0). reflexivity. contradiction.
+  - exact Fin.F1.
+Defined.
+
+Definition make_fn (n : nat) (x : nat) (H : n <> 0) : Fin.t n :=
+  match Fin.of_nat x n with
+  | inleft p => p
+  | inright _ => make_f1 n H
+  end.
 
 Inductive plus {A : Type} (R : A -> A -> Prop) : A -> A -> Prop :=
   | t_base : forall x y, R x y -> plus R x y

@@ -105,11 +105,6 @@ Fixpoint nb_ret {n} (p : Assembly.program n) : nat :=
   | _ :: t => nb_ret t
   end.
 
-Definition vector_zip {A B : Type} {n : nat} (v1 : Vector.t A n)
-                      (v2 : Vector.t B n) : Vector.t (A * B) n :=
-  Vector.map2 (fun x y => (x, y)) v1 v2.
-
-
 Fixpoint j_indexes {n} (p : Assembly.program n) 
                        : (Vector.t (Fin.t n) (nb_jump p)) :=
   match p with
@@ -126,12 +121,6 @@ Fixpoint r_indexes {n} (p : Assembly.program n)
   | _ :: t => map Fin.FS (r_indexes t)
   end.
 
-Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
-Proof.
-  destruct x eqn:H1.
-  - auto with *.
-  - exact Fin.F1.
-Defined.
   
 
 Fixpoint link_jump' {n ln ln'} (p : Assembly.program n) 
@@ -168,6 +157,14 @@ Fixpoint lj_indexes {n} (p : Assembly.program n)
   | Assembly.Jump _ :: t => Fin.F1 :: map Fin.FS (lj_indexes t)
   | _ :: t => map Fin.FS (lj_indexes t)
   end.
+
+
+Definition make_f1 (x : nat) (H : x <> 0) : Fin.t x.
+Proof.
+  destruct x eqn:H1.
+  - auto with *.
+  - exact Fin.F1.
+Defined.
 
 Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   match f in Fin.t n return Fin.t (S n) with
