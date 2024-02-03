@@ -193,22 +193,20 @@ Proof.
   - hauto.
 Qed.
 
-
 Lemma not_final_lm1 {n} : forall prog pc pc',
                           (@Common.to_nat n pc) + 1 = @Common.to_nat n pc' ->
                           Common.to_nat (Compiler.compile_index prog pc) + 1 <>
                           Compiler.comp_len prog.
 Proof.
-  intros. 
-  assert (Common.to_nat pc' <> n).
-  apply fs_lm.
-  assert (Common.to_nat pc' <> n). assumption.
-  rewrite <- H in H0.
+  intros;
+  assert (Common.to_nat pc' <> n) by apply fs_lm;
+  rewrite <- H in H0;
   induction pc; dependent destruction pc'; dependent destruction prog.
-  - ssimpl.
-  - ssimpl; dependent destruction pc'; dependent destruction prog; ssimpl.
-  - simpl in H. inversion H.
-  - ssimpl; (apply IHpc with (prog := prog) (pc' := pc'); (try assumption); try ssimpl).
+  - sfirstorder.
+  - simpl; dependent destruction pc'; dependent destruction prog; qsimpl.
+  - simpl in H; inversion H.
+  - ssimpl; (apply IHpc with (prog := prog) (pc' := pc'); (try assumption);
+    try hauto).
 Qed.
  
 Lemma not_final {n} : forall pc prog spc,
@@ -219,28 +217,32 @@ Proof.
   intros.
   assert (Common.to_nat (@Compiler.compile_index n prog pc) + 1 
           <> Compiler.comp_len prog).
-  apply not_final_lm1 with (pc' := spc).
-  assumption.
-  exists (safe_fs (@Compiler.compile_index n prog pc) H0).
+  apply not_final_lm1 with (pc' := spc); assumption.
+  exists (safe_fs (@Compiler.compile_index n prog pc) H0); 
   apply safe_fs_is_s.
 Qed.
-
-
-
-Theorem seq_instr {n} : forall p x x'
-                  (off : Fin.t (Compiler.comp_len ([p[@x]]))),
-                  Common.to_nat x' =
-                  Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
-                  (Compiler.compile'' p)[@x'] = (Compiler.compile'' [p[@x]])[@off].
-Admitted.
-
 
 Lemma compiled_pc : forall n prog pc pc0 i, Language.read_instr' prog pc0 = i ->
                     Common.to_nat pc0 + 1 = Common.to_nat pc ->
                     Common.to_nat (Compiler.compile_index prog pc0) +
                     vec_len (Compiler.compile'' [i])
                     = Common.to_nat (@Compiler.compile_index n prog pc).
-Proof. (* maybe related to precedent *)
+Proof.
+  intros.
+  unfold vec_len.
+  unfold Language.read_instr' in *.
+  induction pc0; dependent destruction pc; dependent destruction prog.
+  - sfirstorder.
+  - ssimpl; dependent destruction pc; dependent destruction prog; hauto.
+  - simpl in H. destruct i; destruct h; sfirstorder.
+  - simpl in H. destruct h; destruct i; hauto; do 6 f_equal; assumption. 
+Qed.
+
+Theorem seq_instr {n} : forall p x x'
+                  (off : Fin.t (Compiler.comp_len ([p[@x]]))),
+                  Common.to_nat x' =
+                  Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
+                  (Compiler.compile'' p)[@x'] = (Compiler.compile'' [p[@x]])[@off].
 Admitted.
 
 (*particular form of seq_instr*)
