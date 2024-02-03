@@ -194,6 +194,55 @@ Proof.
 Qed.
 (*todo : minus *)
 (*todo : strengthen*)
+
+Definition strengthen {n} (x : Fin.t (S n)) (H : Common.to_nat x <> n) : Fin.t n.
+Proof.
+  destruct n.
+  assert (x = Fin.F1).
+  dependent destruction x.
+  contradiction.
+  inversion x.
+  rewrite H0 in H.
+  contradiction.
+  apply Common.make_fn.
+  exact (Common.to_nat x).
+  lia.
+Defined.
+
+Definition minus {n} (x : Fin.t (S n)) (H : n <> 0) : Fin.t n.
+Proof.
+  destruct n eqn:H0.
+  - contradiction.
+  - destruct x eqn:H1.
+    + exact Fin.F1.
+    + apply Common.make_fn.
+      exact (Common.to_nat t0).
+      unfold not. contradiction.
+Defined.
+
+Lemma minus_is_minus {n} : forall x H,
+                           @Common.to_nat n (minus x H) = Common.to_nat x - 1.
+Proof.
+Admitted.
+
+Lemma strengthen_st {n} : forall x H, @Common.to_nat (S n) x =
+                                      Common.to_nat (strengthen x H).
+Proof.
+Admitted.
+
+Lemma lm1_nat : forall a b, a + 1 <> S b -> a <> b.
+Proof.
+  intros.
+  induction a, b.
+  - contradiction.
+  - lia.
+  - lia.
+  - ssimpl.
+    assert (b + 1 = S b). lia.
+    rewrite H0 in H.
+    contradiction.
+Qed.
+
 Lemma not_final_lm1 {n} : forall prog pc pc',
                           (@Common.to_nat n pc) + 1 = @Common.to_nat n pc' ->
                           Common.to_nat (Compiler.compile_index prog pc) + 1 <>
@@ -206,8 +255,23 @@ Proof.
   unfold not; intros.
   induction prog.
   inversion pc.
-  (* on pose pc' -' 1 et on renforce pc grâce à H0, puis on invoque IHprog *)
-Admitted. 
+  assert (n <> 0).
+  unfold not; intros.
+  dependent destruction prog. assert (pc' = Fin.F1).
+  dependent destruction pc'; ssimpl.
+  rewrite H3 in *. ssimpl; lia.
+  lia.
+  pose (X1 := minus pc' H2).
+  assert (Common.to_nat pc <> n).
+  apply lm1_nat.
+  assumption.
+  pose (X2 := strengthen pc H3).
+  apply IHprog with (pc := X1) (pc' := X2).
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+ 
 Lemma not_final {n} : forall pc prog spc,
                      (Common.to_nat pc) + 1 = @Common.to_nat n spc ->
                      exists sqpc, @Common.to_nat (Compiler.comp_len prog) sqpc =

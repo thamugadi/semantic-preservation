@@ -19,15 +19,11 @@ Proof.
   apply rt_refl.
 Qed.
 
-Fixpoint to_nat {n} (x : Fin.t n) : nat.
-Proof.
-  destruct x eqn:H.
-  - exact 0.
-  - apply plus.
-    + exact 1.
-    + apply to_nat with (n := n).
-      exact t.
-Defined.
+Fixpoint to_nat {n} (x : Fin.t n) : nat :=
+  match x with
+  | Fin.F1 => 0
+  | Fin.FS t => 1 + (to_nat t)
+  end.
 
 Definition make_f1 (n : nat) (H : n <> 0) : Fin.t n.
 Proof.
