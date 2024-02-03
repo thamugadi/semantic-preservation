@@ -17,7 +17,7 @@ Module Verification.
 
 Definition eval {n m} := @Language.semantics n m.
 Definition eval' {n m} := @Assembly.semantics n m.
-Check eval.
+
 Lemma comp_len_eq : forall n m p p', eval p p' ->
                     @Compiler.comp_len n (@Language.prog n m p) =
                     @Compiler.comp_len n (@Language.prog n m p').
@@ -233,8 +233,8 @@ Proof.
   unfold Language.read_instr' in *.
   induction pc0; dependent destruction pc; dependent destruction prog.
   - sfirstorder.
-  - ssimpl; dependent destruction pc; dependent destruction prog; hauto.
-  - simpl in H. destruct i; destruct h; sfirstorder.
+  - ssimpl; dependent destruction pc; dependent destruction prog; ssimpl.
+  - simpl in H. destruct i; destruct h; ssimpl.
   - simpl in H. destruct h; destruct i; hauto; do 6 f_equal; assumption. 
 Qed.
 

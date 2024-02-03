@@ -1,6 +1,9 @@
 Require Import Vector.
 Import Vector.VectorNotations.
 
+Require Import Coq.Program.Equality.
+Require Import Lia.
+
 Module Common.
 
 Definition embed {A : Type} {B : Type} (f : A -> B) :=
@@ -41,8 +44,7 @@ Definition make_fn (n : nat) (x : nat) (H : n <> 0) : Fin.t n :=
   | inleft p => p
   | inright _ => make_f1 n H
   end.
-Require Import Coq.Program.Equality.
-Require Import Lia.
+
 Definition strengthen {n} (x : Fin.t (S n)) (H : Common.to_nat x <> n) : Fin.t n.
 Proof.
   destruct n.
