@@ -19,6 +19,10 @@ Proof.
   apply rt_refl.
 Qed.
 
+Inductive plus {A : Type} (R : A -> A -> Prop) : A -> A -> Prop :=
+  | t_base : forall x y, R x y -> plus R x y
+  | t_trans : forall x y z, R x y -> plus R y z -> plus R x z.
+
 Fixpoint to_nat {n} (x : Fin.t n) : nat :=
   match x with
   | Fin.F1 => 0
@@ -37,9 +41,31 @@ Definition make_fn (n : nat) (x : nat) (H : n <> 0) : Fin.t n :=
   | inleft p => p
   | inright _ => make_f1 n H
   end.
+Require Import Coq.Program.Equality.
+Require Import Lia.
+Definition strengthen {n} (x : Fin.t (S n)) (H : Common.to_nat x <> n) : Fin.t n.
+Proof.
+  destruct n.
+  assert (x = Fin.F1).
+  dependent destruction x.
+  contradiction.
+  inversion x.
+  rewrite H0 in H.
+  contradiction.
+  apply Common.make_fn.
+  exact (Common.to_nat x).
+  lia.
+Defined.
 
-Inductive plus {A : Type} (R : A -> A -> Prop) : A -> A -> Prop :=
-  | t_base : forall x y, R x y -> plus R x y
-  | t_trans : forall x y z, R x y -> plus R y z -> plus R x z.
+Definition minus {n} (x : Fin.t (S n)) (H : n <> 0) : Fin.t n.
+Proof.
+  destruct n eqn:H0.
+  - contradiction.
+  - destruct x eqn:H1.
+    + exact Fin.F1.
+    + apply Common.make_fn.
+      exact (Common.to_nat t).
+      unfold not. contradiction.
+Defined.
 
 End Common.
