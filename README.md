@@ -4,7 +4,7 @@
 
 The purpose of this repo is to give a minimal example (not that minimal, I finally realized lol) of a compiler for which the forward simulation property is verified.
 
-I considered a brainfuck-like language, compiling to a kind of generic assembler; many aspects were difficult to handle, notably the fact that after compilation, I need to perform a linking operation a posteriori, to resolve the absolute addresses of the jumps.
+I considered a brainfuck-like language, compiling to a kind of generic assembler; many aspects were difficult to handle in the forward simulation proof, notably the fact that after compilation, I need to resolve the absolute addresses for the jump operands.
 
 The proof remains incomplete, but the skeleton is there. For the moment, I'm thinking of putting the project on hold, as it turned out to be much more difficult than I had imagined. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics :)
 
