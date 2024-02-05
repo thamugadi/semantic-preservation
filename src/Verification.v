@@ -93,23 +93,10 @@ Proof.
   try (now reflexivity);
   try (apply IHi).
 Qed.
-
-Lemma link_stable_1 : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
-                      p[@ind] = i -> (@Compiler.link_jump n p)[@ind] = i.
-Admitted.
-Lemma link_stable_2 : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
-                      p[@ind] = i -> (@Compiler.link_ret n p)[@ind] = i.
-Admitted.
-
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
 Proof.
-  intros. unfold Compiler.link.
-  rewrite link_stable_2 with (i := i).
-  reflexivity.
-  assumption.
-  apply link_stable_1; assumption.
-Qed.
+Admitted.
 
 Lemma read_comp {n m} : forall p i H1 H2, Language.read_instr p i ->
                                i <> Language.Jump -> i <> Language.Ret ->
@@ -146,15 +133,6 @@ Proof.
   inversion H.
   reflexivity.
 Qed.
-
-Lemma to_nat_st_r {n} : forall a b, a = b -> @Common.to_nat n a = Common.to_nat b.
-Proof.
-  intros.
-  dependent induction a; sauto.
-Qed.
-
-
-(* add similar lemmas with multiple read_instr *)
 
 Fixpoint weaken_fin_t {n : nat} (f : Fin.t n) : Fin.t (S n) :=
   match f in Fin.t n return Fin.t (S n) with
@@ -243,7 +221,25 @@ Theorem seq_instr {n} : forall p x x'
                   Common.to_nat x' =
                   Common.to_nat (@Compiler.compile_index n p x) + Common.to_nat off ->
                   (Compiler.compile'' p)[@x'] = (Compiler.compile'' [p[@x]])[@off].
+Proof.
 Admitted.
+
+
+Ltac seq_instr_n prog pc pc' n:=
+  intros;
+  ssimpl;
+  apply Assembly.ri; simpl;
+  unfold Assembly.read_instr';
+  apply link_stable; try (hauto);
+  assert (Compiler.comp_len [prog[@pc]] <> 0) as EH2;
+  try hauto;
+  pose (X := Common.make_fn (Compiler.comp_len [prog[@pc]]) n EH2);
+  assert ((Compiler.compile'' prog)[@pc'] = (Compiler.compile'' [prog[@pc]])[@X]) as EH;
+  try (apply seq_instr);
+  assert (Common.to_nat X = n) as EH1;
+  try hauto;
+  rewrite EH;
+  hauto.
 
 (*particular form of seq_instr*)
 Lemma seq_inc1 {n m}: forall p q1 H H',
@@ -252,30 +248,55 @@ Lemma seq_inc1 {n m}: forall p q1 H H',
                      eval' (@Compiler.compile_link n m p H H') q1 ->
                      Assembly.read_instr q1 Assembly.Load.
 Proof.
-  intros.
-  ssimpl.
-  apply Assembly.ri.
-  simpl.
-  unfold Assembly.read_instr'.
-  cut ((Compiler.compile'' prog)[@pc] = Assembly.Load).
-  intros.
-  apply link_stable.
-  ssimpl.
-  assumption.
-  assert (Compiler.comp_len [prog[@pc0]] <> 0).
-  ssimpl.
-  assert (1 < Compiler.comp_len [prog[@pc0]]). ssimpl.
-  pose (X := Common.make_fn (Compiler.comp_len [prog[@pc0]]) 1 H1).
-  assert ((Compiler.compile'' prog)[@pc] = (Compiler.compile'' [prog[@pc0]])[@X]).
-  apply seq_instr.
-  assert (Common.to_nat X = 1).
-  sauto.
-  rewrite H4.
-  assumption.
-  rewrite H4.
-  sauto.
+  seq_instr_n prog pc0 pc 1.
 Qed. 
-  
+
+Lemma seq_inc2 {n m}: forall p q1 q2 H H',
+                     (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
+                     eval' (@Compiler.compile_link n m p H H') q1 ->
+                     eval' q1 q2 -> Assembly.read_instr q1 Assembly.Load ->
+                     Assembly.read_instr q2 (Assembly.Add 1).
+Proof.
+  (*seq_instr_n prog pc1 pc 2.*) (*works, but runs too slowly*)
+Admitted.
+
+Lemma seq_inc3 {n m}: forall p q1 q2 q3 H H',
+                     (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
+                     eval' (@Compiler.compile_link n m p H H') q1 ->
+                     eval' q1 q2 -> eval' q2 q3 -> Assembly.read_instr q1 Assembly.Load ->
+                     Assembly.read_instr q2 (Assembly.Add 1) ->
+                     Assembly.read_instr q3 (Assembly.Store).
+Proof.
+  (*seq_instr_n prog pc2 pc 3.*) (*works, but runs too slowly*)
+Admitted.
+Lemma seq_inc4 {n m}: forall p q1 q2 q3 q4 H H',
+                     (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
+                     eval' (@Compiler.compile_link n m p H H') q1 ->
+                     eval' q1 q2 -> eval' q2 q3 -> eval' q3 q4 ->
+                     Assembly.read_instr q1 Assembly.Load ->
+                     Assembly.read_instr q2 (Assembly.Add 1) ->
+                     Assembly.read_instr q3 (Assembly.Store) ->
+                     Assembly.read_instr q4 (Assembly.Zero).
+Proof.
+  (*seq_instr_n prog pc3 pc 4.*) (*works, but runs too slowly*)
+Admitted.
+Lemma seq_inc5 {n m}: forall p q1 q2 q3 q4 q5 H H',
+                     (Language.prog p)[@Language.pc p] = Language.Inc ->
+                     Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
+                     eval' (@Compiler.compile_link n m p H H') q1 ->
+                     eval' q1 q2 -> eval' q2 q3 -> eval' q3 q4 -> eval' q4 q5 ->
+                     Assembly.read_instr q1 Assembly.Load ->
+                     Assembly.read_instr q2 (Assembly.Add 1) ->
+                     Assembly.read_instr q3 (Assembly.Store) ->
+                     Assembly.read_instr q4 (Assembly.Zero) ->
+                     Assembly.read_instr q5 (Assembly.Swap).
+Proof.
+  (*seq_instr_n prog pc4 pc 5.*) (*works, but runs too slowly*)
+Admitted.
+
 Theorem comp_correct {n m : nat} :
     forall p q, Compiler.compile p q -> 
     forall p' (E : eval p p'), 
@@ -297,6 +318,7 @@ Proof.
     + reflexivity. 
   - (unfold comp_len_f; unfold eq_rec_r; unfold eq_rec; unfold eq_rect).
     ssimpl.
+    (*Assembly.PtrInc*)
     + apply Common.t_base.
       apply Assembly.add with (n' := 1).
       * assert (Assembly.read_instr (@Compiler.compile_link n m {|Language.prog := prog;
@@ -313,6 +335,7 @@ Proof.
       * now reflexivity.
       * simpl. unfold Compiler.make_f1. ssimpl.
       * ssimpl.
+    (*Assembly.PtrDec*)
     + apply Common.t_base.
       apply Assembly.sub with (n' := 1).
       * assert (Assembly.read_instr (@Compiler.compile_link n m {|Language.prog := prog;
@@ -328,6 +351,8 @@ Proof.
       * now reflexivity.
       * simpl. unfold Compiler.make_f1. ssimpl.
       * ssimpl.
+
+    (*Assembly.Inc*)
     + remember (Compiler.compile_link {|Language.prog := prog;Language.mem := mem0;
                Language.pc := pc0; Language.ptr := ptr|} H2 H3) as q.
       remember (Compiler.compile_link {|Language.prog := prog;Language.mem := mem;
@@ -347,9 +372,7 @@ Proof.
       apply read_comp with (i := Language.Inc).
       ssimpl.
       discriminate. discriminate.
-
-      (*Here, we are going to prove the existence of intermediate states to which
-        q is evaluated to before getting to q' (which is compiled p') *)
+(**)
       assert (exists q1, eval' q q1).
       rewrite <- Heqq in *.
       assert (exists sqpc,
@@ -364,8 +387,9 @@ Proof.
                                     (Assembly.ac q)).
       ssimpl.
       destruct H7; rename x into q1.
+
       assert (Assembly.read_instr q1 Assembly.Load).
-      admit.
+      apply seq_inc1 with (H := H2) (H' := H3); ssimpl.
       assert (exists q2, eval' q1 q2).
       admit.
       destruct H9; rename x into q2.
@@ -407,11 +431,15 @@ Proof.
       * admit.
       * admit.
 
-    + (*same proof as before*) admit.
-
-    (* will require other lemmas, as we will have to consider linking: *)
-    + (*assert the existence of q1*) admit.
-    + (*assert the existence of q1*) admit.
+    + (*same proof as before*) 
+      (*Assembly.Dec*) 
+      admit.
+    + (*Assembly.Jump, resulting from two cases of Jump and two cases of Ret*)
+      (* will require other lemmas, as we will have to consider linking: *)
+      (*assert the existence of q1*)
+      admit.
+    + (*assert the existence of q1*)
+      admit.
     + (*assert the existence of q1*) admit.
     + (*assert the existence of q1*) admit.
 Admitted.

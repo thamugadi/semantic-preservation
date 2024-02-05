@@ -10,6 +10,7 @@ Require Import PeanoNat.
 Require Import Lia.
 Import Nat.
 Require Import Coq.Vectors.VectorEq.
+Require Coq.Program.Wf.
 
 Module Compiler.
 
@@ -192,15 +193,17 @@ Fixpoint link_ret' {n ln ln'} (p : Assembly.program n)
                   end
   end.
 
+Definition inc_jump (i : Assembly.instr) : Assembly.instr :=
+  match i with
+  | Assembly.Jump n0 => Assembly.Jump (n0 + 1)
+  | a => a
+  end.
 
 Definition link_ret {n} (p : Assembly.program n) : (Assembly.program n) :=
-  link_ret' p (lj_indexes p) (r_indexes p).
-
-(* note : an offset of 1 is added to jump's operand, in Assembly.semantics*)
-
+  (link_ret' p (lj_indexes p) (r_indexes p)).
 
 Definition link {n} (l : Assembly.program n) : (Assembly.program n) :=
-  link_ret (link_jump l) .
+  map (inc_jump) (link_ret (link_jump l)).
 
 Definition make_vector (A : Type) (x : A) (n : nat) : Vector.t A n.
 Proof.

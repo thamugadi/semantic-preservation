@@ -68,7 +68,7 @@ Inductive semantics {n m} (p : state) (p' : state) : Prop :=
               semantics p p'
   | jump : forall n', read_instr p (Jump n') -> p.(prog) = p'.(prog) ->
                p.(ac) = p'.(ac) -> p.(mem) = p'.(mem) -> Common.to_nat (p'.(pc)) =
-               n'+1 -> p.(b) = p'.(b) -> semantics p p'
+               n' -> p.(b) = p'.(b) -> semantics p p'
   | skipz: read_instr p (Skip) -> p.(prog) = p'.(prog) ->
                p.(mem) = p'.(mem) -> p.(ac) = p'.(ac) -> p.(b) = p'.(b) ->
                read_mem p 0 -> Common.to_nat (p'.(pc)) = Common.to_nat (p.(pc)) + 2 ->
