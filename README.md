@@ -1,13 +1,22 @@
 # semantic-preservation
 
+## Update (06/02/2024)
+
+The purpose of this repo is to give a minimal example (not that minimal, I finally realized lol) of a compiler for which the forward simulation property is verified.
+
+I considered a brainfuck-like language, compiling to a kind of generic assembler; many aspects were difficult to handle, notably the fact that after compilation, I need to perform a linking operation a posteriori, to resolve the absolute addresses of the jumps.
+
+The proof remains incomplete, but the skeleton is there. For the moment, I'm thinking of putting the project on hold, as it turned out to be much more difficult than I had imagined. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics :)
+
+## Introduction
+
 - Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 - This is an attempt to formalise the semantic conservation properties for compilers described in Xavier Leroy's paper.
 - This repository will try to use them to formally verify a compiler, defined in [src/Compiler.v](src/Compiler.v), transforming expressions between 2 toy languages.
 
 ## Semantics
 
-- It is assumed that the operational semantics of the two languages, target and source, have been formalised.
-- In the example given in this repository, we will define small-step semantics for two basic languages: a source language and an assembly language for a virtual architecture: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
+- We define small-step semantics for two basic languages: a source language and an assembly language for a virtual architecture: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
   
 ## Simulation property
 
@@ -17,8 +26,4 @@
 ## Proof of 'plus' simulation
 
 - The proof ([src/Verification.v](src/Verification.v)) is still incomplete.
-
-## TODO:
-
-- Use vectors instead of lists (lists make the proof too complicated to complete)
-- Complete the proof
+- Vectors are used instead of lists, as some lemmas were easier to prove for vectors, like read\_instr\_eq
