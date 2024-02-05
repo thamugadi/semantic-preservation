@@ -224,32 +224,29 @@ Theorem seq_instr {n} : forall p x x'
 Proof.
 Admitted.
 
-
-Ltac seq_instr_n prog pc pc' n:=
+Ltac seq_ins_n p pc' n H :=
   intros;
-  ssimpl;
-  apply Assembly.ri; simpl;
-  unfold Assembly.read_instr';
-  apply link_stable; try (hauto);
+  destruct p as [prog mem pc ptr];
+  unfold Compiler.compile_link in *;
+  apply Assembly.ri;
+  unfold Assembly.read_instr' in *;
+  simpl in *;
+  destruct H; try ssimpl;
+  apply link_stable; try sdone;
   assert (Compiler.comp_len [prog[@pc]] <> 0) as EH2;
-  try hauto;
+  try qauto;
   pose (X := Common.make_fn (Compiler.comp_len [prog[@pc]]) n EH2);
   assert ((Compiler.compile'' prog)[@pc'] = (Compiler.compile'' [prog[@pc]])[@X]) as EH;
-  try (apply seq_instr);
-  assert (Common.to_nat X = n) as EH1;
-  try hauto;
-  rewrite EH;
-  hauto.
+  try (apply seq_instr); hauto.
 
-(*particular form of seq_instr*)
 Lemma seq_inc1 {n m}: forall p q1 H H',
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
                      Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
                      eval' (@Compiler.compile_link n m p H H') q1 ->
                      Assembly.read_instr q1 Assembly.Load.
 Proof.
-  seq_instr_n prog pc0 pc 1.
-Qed. 
+  seq_ins_n p pc0 1 H2.
+Qed.
 
 Lemma seq_inc2 {n m}: forall p q1 q2 H H',
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
@@ -258,8 +255,8 @@ Lemma seq_inc2 {n m}: forall p q1 q2 H H',
                      eval' q1 q2 -> Assembly.read_instr q1 Assembly.Load ->
                      Assembly.read_instr q2 (Assembly.Add 1).
 Proof.
-  (*seq_instr_n prog pc1 pc 2.*) (*works, but runs too slowly*)
-Admitted.
+  seq_ins_n p pc0 2 H3.
+Qed.
 
 Lemma seq_inc3 {n m}: forall p q1 q2 q3 H H',
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
@@ -269,8 +266,8 @@ Lemma seq_inc3 {n m}: forall p q1 q2 q3 H H',
                      Assembly.read_instr q2 (Assembly.Add 1) ->
                      Assembly.read_instr q3 (Assembly.Store).
 Proof.
-  (*seq_instr_n prog pc2 pc 3.*) (*works, but runs too slowly*)
-Admitted.
+  seq_ins_n p pc0 3 H4.
+Qed.
 Lemma seq_inc4 {n m}: forall p q1 q2 q3 q4 H H',
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
                      Assembly.read_instr (Compiler.compile_link p H H') Assembly.Swap ->
@@ -281,7 +278,7 @@ Lemma seq_inc4 {n m}: forall p q1 q2 q3 q4 H H',
                      Assembly.read_instr q3 (Assembly.Store) ->
                      Assembly.read_instr q4 (Assembly.Zero).
 Proof.
-  (*seq_instr_n prog pc3 pc 4.*) (*works, but runs too slowly*)
+  (*seq_ins_n p pc0 4 H5.*) (*works, but too slow*)
 Admitted.
 Lemma seq_inc5 {n m}: forall p q1 q2 q3 q4 q5 H H',
                      (Language.prog p)[@Language.pc p] = Language.Inc ->
@@ -294,7 +291,7 @@ Lemma seq_inc5 {n m}: forall p q1 q2 q3 q4 q5 H H',
                      Assembly.read_instr q4 (Assembly.Zero) ->
                      Assembly.read_instr q5 (Assembly.Swap).
 Proof.
-  (*seq_instr_n prog pc4 pc 5.*) (*works, but runs too slowly*)
+  (*seq_ins_n p pc0 5 H6.*) (*too slow*)
 Admitted.
 
 Theorem comp_correct {n m : nat} :
@@ -440,7 +437,9 @@ Proof.
       admit.
     + (*assert the existence of q1*)
       admit.
-    + (*assert the existence of q1*) admit.
-    + (*assert the existence of q1*) admit.
+    + (*assert the existence of q1*) 
+      admit.
+    + (*assert the existence of q1*)
+      admit.
 Admitted.
 End Verification.
