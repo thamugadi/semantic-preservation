@@ -93,6 +93,7 @@ Proof.
   try (now reflexivity);
   try (apply IHi).
 Qed.
+
 Lemma link_stable : forall n p ind i, (i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
                     p[@ind] = i -> (@Compiler.link n p)[@ind] = i.
 Proof.

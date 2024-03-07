@@ -26,6 +26,7 @@ Fixpoint matched' {n} (p : Language.program n) (c : nat) : bool :=
     end
   end.
 
+
 Inductive matched {n} (p : Language.program n) : Prop :=
   | match_r : matched' p 1 = true -> matched p.
 Fixpoint comp_len {n} (p : Language.program n) : nat :=
@@ -249,3 +250,8 @@ Inductive compile {n m}
   | comp_r : forall H H1, matched (p.(Language.prog)) -> q 
              = compile_link p H H1 -> compile p q.
 End Compiler.
+
+Require Import ExtrOcamlBasic.
+Require Import ExtrOcamlNatInt.
+Extraction Language OCaml.
+Recursive Extraction Compiler.compile_link.

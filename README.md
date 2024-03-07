@@ -6,6 +6,15 @@ The purpose of this repo is to give a minimal example (not that minimal, I final
 
 I considered a brainfuck-like language, compiling to a kind of generic assembler; many aspects were difficult to handle in the forward simulation proof, notably the fact that after compilation, I need to resolve the absolute addresses for the jump operands.
 
+Proving forward 'plus' simulation is basically a matter of proving that if:
+- p compiles into q
+- p evaluates into p'
+then:
+- p' compiles into q'
+- q evaluates+ into q'
+
+where "+" is the transitive closure.
+
 The proof remains incomplete, but the skeleton is there. For the moment, I'm thinking of putting the project on hold, as it turned out to be much more difficult than I had imagined. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics :)
 
 ## Introduction
@@ -21,7 +30,7 @@ The proof remains incomplete, but the skeleton is there. For the moment, I'm thi
 ## Simulation property
 
 - The aim of Leroy's paper is to describe how a source program S and a target program C retain the same semantics if the compilation process succeeds.
-- Several relations are defined in his paper to express semantic preservation. In [src/Simulation.v](src/Simulation.v) are included the definitions to construct the lockstep, "plus", "option" and "star" simulation relations described in p. 16.
+- Several relations are defined to express semantic preservation. In [src/Simulation.v](src/Simulation.v) are included the definitions to construct the lockstep, "plus", "option" and "star" simulation relations described in p. 16.
 
 ## Proof of 'plus' simulation
 
