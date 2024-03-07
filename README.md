@@ -9,7 +9,9 @@ I considered a brainfuck-like language, compiling to a kind of generic assembler
 Proving forward 'plus' simulation is basically a matter of proving that if:
 - p compiles into q
 - p evaluates into p'
+
 then:
+
 - p' compiles into q'
 - q evaluates+ into q'
 
