@@ -1,9 +1,9 @@
-Require Import Vector.
-Import Vector.VectorNotations.
 Require Import Program.Equality.
 Require Import PeanoNat.
 Require Import Common.
 Require Import Lia.
+Require Import List.
+Import List.ListNotations.
 Module Language.
 Inductive instr : Type :=
   | PtrInc : instr
@@ -13,30 +13,15 @@ Inductive instr : Type :=
   | Jump : instr
   | Ret : instr
   | Halt : instr.
-Definition program (n : nat) := t instr n.
+Definition program := list instr.
 
-Record state {n m : nat} : Type := mkState
+Record state : Type := mkState
 { 
-  prog : program n;
-  mem : t nat m;
-  pc : Fin.t n;
-  ptr : Fin.t m;
+  prog : program;
+  mem : list nat;
+  pc : nat;
+  ptr : nat;
 }.
-
-Definition read_instr' {n} (prog : program n) (pc : Fin.t n) : instr :=
- prog[@pc].
-
-Inductive read_instr {n m} (p : state) (i : instr) : Prop  :=
-  | ri : read_instr' p.(prog n m) p.(pc n m) = i -> read_instr p i.
-
-Definition read_mem' {m} (mem : t nat m) (ptr : Fin.t m) : nat := mem[@ptr].
-
-Inductive read_mem {n m} (p : state) (e : nat) : Prop  :=
-  | mi : read_mem' p.(mem n m) p.(ptr n m) = e -> read_mem p e.
-
-
-Inductive mem_diff {m} (m1 : t nat m) (m2 : t nat m) (x : Fin.t m) : Prop :=
-  | md : (forall i, i <> x -> m2[@i] = m1[@i]) -> mem_diff m1 m2 x. 
 
 
 Definition option_inc (i : option nat) : option nat :=
@@ -45,7 +30,17 @@ Definition option_inc (i : option nat) : option nat :=
   | Some a => Some (a + 1)
   end.
 
-Fixpoint matching_ret' {n} (l : t instr n) (idx : nat) (c c' : nat) :
+
+Fixpoint matching_jump' (l : list instr) (idx : nat) (c : nat) 
+                        (c' : option nat) : option nat :=
+  match l with
+  | [] => None
+  | Jump :: h => if c =? idx then None else matching_jump' h idx (c+1) (Some c)
+  | Ret :: h => if c =? idx then (option_inc c') else None
+  | _ :: h => if c =? idx then None else matching_jump' h idx (c+1) c'
+  end.
+
+Fixpoint matching_ret' (l : list instr) (idx : nat) (c c' : nat) :
                            option nat :=
   match l with
   | [] => None
@@ -55,57 +50,46 @@ Fixpoint matching_ret' {n} (l : t instr n) (idx : nat) (c c' : nat) :
     | Ret => if c =? 0 then (Some (c' + 1)) else matching_ret' h idx
              (c-1) (c'+1)
     | _ => matching_ret' h idx c (c'+1)
-  end
+    end
 end.
 
-Fixpoint matching_jump' {n} (l : t instr n) (idx : nat) (c : nat) 
-                        (c' : option nat) : option nat :=
-  match l with
-  | [] => None
-  | Jump :: h => if c =? idx then None else matching_jump' h idx (c+1) (Some c)
-  | Ret :: h => if c =? idx then (option_inc c') else None
-  | _ :: h => if c =? idx then None else matching_jump' h idx (c+1) c'
-  end.
+(*make them propositions*)
 
-Inductive matching_jump {n} (p : program n) (x : Fin.t n) (x' : Fin.t n) : Prop :=
-  | mj : matching_jump' p (Common.to_nat x) 0 None = Some (Common.to_nat x') -> matching_jump p x x'.
-Inductive matching_ret {n} (p : program n) (x : Fin.t n) (x' : Fin.t n): Prop :=
-  | mr : matching_ret' p (Common.to_nat x) 0 0 = Some (Common.to_nat x') -> matching_ret p x x'.
+Inductive matching_jump (p : program) (x x' : nat) : Prop :=
+  | mj : matching_jump' p x 0 None = Some x' -> matching_jump p x x'.
+Inductive matching_ret (p : program) (x x' : nat) : Prop :=
+  | mr : matching_ret' p x 0 0 = Some x' -> matching_ret p x x'.
 
-(*Some cases will not be accepted for compilation anyway, like unmatched jumps.*)
 (* Small-step operational semantics for our source language.*)
 
-Inductive semantics {n m} (p : state) (p' : state) : Prop :=
-  | ptr_inc : read_instr p PtrInc ->  Common.to_nat p.(ptr) + 1 = Common.to_nat p'.(ptr) ->
-                   Common.to_nat p.(pc n m) + 1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
-                   p.(mem) = p'.(mem) -> semantics p p'
-  | ptr_dec : read_instr p PtrDec -> Common.to_nat p.(ptr) - 1 = Common.to_nat p'.(ptr) ->
-                    Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
-                   p.(mem) = p'.(mem) -> semantics p p'
-  | inc : read_instr p Inc -> p.(ptr) = p'.(ptr) ->
-               Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
-               mem_diff p.(mem) p'.(mem) p.(ptr) ->
-               p.(mem)[@p.(ptr)] + 1 = p'.(mem)[@p.(ptr)] ->
-               semantics p p'
-  | dec : read_instr p Dec -> p.(ptr) = p'.(ptr) ->
-               Common.to_nat p.(pc) +1 = Common.to_nat p'.(pc)-> p.(prog) = p'.(prog) ->
-               mem_diff p.(mem) p'.(mem) p.(ptr) ->
-               p.(mem)[@p.(ptr)] - 1 = p'.(mem)[@p.(ptr)] ->
-               semantics p p'
-  | jump_z : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
-                  p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-                  read_mem p 0 -> matching_ret p.(prog) p.(pc) p'.(pc) ->
-                  semantics p p'
-  | jump_nz : read_instr p Jump -> p.(ptr) = p'.(ptr) ->
-                   p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-                   ~ (read_mem p 0) ->
-                   Common.to_nat p.(pc) + 1 = Common.to_nat p'.(pc)-> semantics p p'
-  | ret_z :  read_instr p Ret -> p.(ptr) = p'.(ptr) ->
-                  p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-                  matching_jump p.(prog) p.(pc) p'.(pc) -> read_mem p 0 ->
-                  semantics p p'
-  | ret_nz : read_instr p Ret -> p.(ptr) = p'.(ptr) ->
-                  p.(prog) = p'.(prog) -> p.(mem) = p'.(mem) ->
-                  ~ (read_mem p 0) ->
-                  Common.to_nat p.(pc) +  1 = Common.to_nat p'.(pc) -> semantics p p'.
+Definition read_instr (p : state) (i : instr) :=
+  Common.lookup (prog p) (pc p) i.
+
+Inductive semantics (p p' : state) : Prop :=
+  | ptr_inc : read_instr p PtrInc -> prog p = prog p' -> pc p + 1 = pc p' ->
+              ptr p + 1 = ptr p' -> mem p = mem p' -> semantics p p'
+  | ptr_dec : read_instr p PtrDec -> prog p = prog p' -> pc p + 1 = pc p' ->
+              ptr p - 1 = ptr p' -> mem p = mem p' -> semantics p p'
+  | inc     : read_instr p Inc -> prog p = prog p' -> pc p + 1 = pc p' ->
+              ptr p = ptr p' ->
+              Common.list_eq_except (mem p) (mem p') [ptr p] ->
+              forall M, (Common.lookup (mem p) (ptr p) M ->
+                         Common.lookup (mem p') (ptr p') (M+1)) -> semantics p p'
+  | dec     : read_instr p Dec -> prog p = prog p' -> pc p + 1 = pc p' ->
+              ptr p = ptr p' ->
+              Common.list_eq_except (mem p) (mem p') [ptr p] ->
+              forall M, (Common.lookup (mem p) (ptr p) M ->
+                         Common.lookup (mem p') (ptr p') (M-1)) -> semantics p p'
+  | jump_z  : read_instr p Jump -> ptr p = ptr p' -> prog p = prog p' -> mem p = mem p' -> 
+              Common.lookup (mem p) (ptr p) 0 -> matching_ret (prog p) (pc p) (pc p') ->
+              semantics p p'
+  | jump_nz : read_instr p Jump -> ptr p = ptr p' -> prog p = prog p' -> mem p = mem p' -> 
+              ~(Common.lookup (mem p) (ptr p) 0) -> pc p + 1 = pc p' ->
+              semantics p p'
+  | ret_z   : read_instr p Ret -> ptr p = ptr p' -> prog p = prog p' -> mem p = mem p' -> 
+              Common.lookup (mem p) (ptr p) 0 -> matching_jump (prog p) (pc p) (pc p') ->
+              semantics p p'
+  | ret_nz  : read_instr p Ret -> ptr p = ptr p' -> prog p = prog p' -> mem p = mem p' -> 
+              ~(Common.lookup (mem p) (ptr p) 0) -> pc p + 1 = pc p' ->
+              semantics p p'.
 End Language.
