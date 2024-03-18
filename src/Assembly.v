@@ -29,8 +29,6 @@ Record state: Type := mkState
 Definition read_instr (p : state) (i : instr) :=
   Common.lookup (prog p) (pc p) i.
 
-(*list_eq_except {A} (m1 : list A) (m2 : list A) (indexes : list nat)*)
-
 (* Small-step operational semantics for our target language.*)
 
 Inductive semantics (p p' : state) : Prop :=

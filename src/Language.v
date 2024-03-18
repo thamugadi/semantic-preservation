@@ -53,8 +53,6 @@ Fixpoint matching_ret' (l : list instr) (idx : nat) (c c' : nat) :
     end
 end.
 
-(*make them propositions*)
-
 Inductive matching_jump (p : program) (x x' : nat) : Prop :=
   | mj : matching_jump' p x 0 None = Some x' -> matching_jump p x x'.
 Inductive matching_ret (p : program) (x x' : nat) : Prop :=
