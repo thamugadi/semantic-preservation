@@ -30,62 +30,10 @@ Lemma comp_instr_lm : forall p q pc i,
                       Common.lookup q (Compiler.compile_index p pc)
                                       (Compiler.comp_first i).
 Proof.
-  induction p; destruct q; destruct i; intros; try inversion H.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; inversion H0.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - exfalso; apply lm1 with (a := a) (p := p); assumption.
-  - hauto.
-  - hauto.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp. reflexivity.
-    assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp. reflexivity.
-    assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp. reflexivity.
-    assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp. reflexivity.
-    assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp.
-  - destruct a; ssimpl;
-    rewrite trv; apply Common.lu2; apply Common.lu2;
-    apply IHp; try reflexivity; try assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp. reflexivity. assumption.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp.
-  - destruct a; ssimpl;
-    rewrite trv;
-    apply Common.lu2;
-    apply IHp.
+  induction p; destruct q; destruct i; intros; try inversion H; inversion H0;
+  (assert (Compiler.compile'' (a :: p) = [] -> False) by apply lm1); 
+  try (exfalso; apply H6; assumption); ssimpl;
+  try (repeat apply Common.lu2; rewrite trv; now apply IHp).
 Qed.
 
 Lemma comp_instr : forall prog pc i,
@@ -110,6 +58,8 @@ Lemma link_stable :
   Common.lookup p ind i -> 
   Common.lookup (Compiler.link p) ind i.
 Proof.
+  intros.
+  destruct i; ssimpl.
 Admitted.
 
 Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
