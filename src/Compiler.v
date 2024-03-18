@@ -125,8 +125,14 @@ Definition inc_jump (i : Assembly.instr) : Assembly.instr :=
   | a => a
   end.
 
-Definition link (l : Assembly.program) : (Assembly.program) :=
-  map (inc_jump) (link_ret (link_jump l)).
+Fixpoint link (l : Assembly.program) : Assembly.program :=
+  match l with
+  | [] => []
+  | Assembly.Jump n :: t => t (*already linked*)
+  | Assembly.UJUMP :: t => map (inc_jump) (link_ret (link_jump l))
+  | Assembly.URET  :: t => map (inc_jump) (link_ret (link_jump l))
+  | a :: t => a :: map inc_jump (link t)
+  end.
 
 Definition compile' (p : Language.state) : Assembly.state :=
   Assembly.mkState (link (compile'' (Language.prog p)))

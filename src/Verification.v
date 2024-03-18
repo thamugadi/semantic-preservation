@@ -51,6 +51,20 @@ Proof.
   auto.
 Qed.
 
+Lemma link_stable_lm1 :
+  forall p i,
+  (forall n, i <> Assembly.UJUMP /\ i <> Assembly.URET /\ i <> Assembly.Jump n) ->
+  Compiler.link (i::p) = i :: (map Compiler.inc_jump (Compiler.link p)).
+Proof.
+  intros.
+  destruct i; ssimpl.
+  exfalso.
+  apply H.
+  exact 0. reflexivity.
+  exfalso.
+  apply H1.
+  exact 0. reflexivity.
+Qed.
 
 Lemma link_stable : 
   forall p ind i,
@@ -58,8 +72,6 @@ Lemma link_stable :
   Common.lookup p ind i -> 
   Common.lookup (Compiler.link p) ind i.
 Proof.
-  intros.
-  destruct i; ssimpl.
 Admitted.
 
 Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
