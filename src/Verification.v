@@ -6,8 +6,6 @@ Require Import Compiler.
 Require Import Lia.
 Require Import List.
 Import ListNotations.
-Require Import Program.Equality.
-Require Import PeanoNat.
 
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
@@ -118,7 +116,9 @@ Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
 Proof.
 Admitted.
 
-Lemma lm3 : forall p i, Common.lookup p i Language.PtrInc ->
+Lemma lm3 : forall p i ins,
+                        (ins <> Language.Jump /\ ins <> Language.Ret) ->
+                        Common.lookup p i ins ->
                         Compiler.compile_index p i + 1 =
                         Compiler.compile_index p (i + 1).
 Admitted.
@@ -150,7 +150,6 @@ Proof.
       assumption.
     + simpl.
       unfold Language.read_instr in r.
-
       inversion r.
       * destruct p'; ssimpl.
         destruct p; ssimpl.
@@ -162,10 +161,12 @@ Proof.
         rewrite <- e;
         rewrite <- e0;
         rewrite H0;
-        destruct p; ssimpl; f_equal; rewrite trv; rewrite trv; admit.
-    + admit.
-    + admit.
-    + admit.
+        destruct p; ssimpl; f_equal; rewrite trv; rewrite trv; f_equal;
+        (apply lm3 with (ins := Language.PtrInc)); try (split; discriminate);
+        assumption.
+    + simpl; reflexivity.
+    + simpl; assumption.
+    + simpl; inversion e1; reflexivity.
 Admitted.
 
 End Verification.
