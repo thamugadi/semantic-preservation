@@ -114,14 +114,21 @@ Admitted.
 
 Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
 Proof.
-Admitted.
+  destruct p;
+  now reflexivity.
+Qed.
 
 Lemma lm3 : forall p i ins,
                         (ins <> Language.Jump /\ ins <> Language.Ret) ->
                         Common.lookup p i ins ->
                         Compiler.compile_index p i + 1 =
                         Compiler.compile_index p (i + 1).
-Admitted.
+Proof.
+  intros; destruct ins; ssimpl;
+  induction H0; ssimpl; f_equal;
+  assert (forall p, Compiler.compile_index p 0 = 0) by apply lm2; ssimpl;
+  rewrite trv; rewrite trv; repeat f_equal; try assumption.
+Qed.
 
 Theorem th : Simulation.plus_forward_sim Compiler.compile 
              Language.semantics Assembly.semantics.
