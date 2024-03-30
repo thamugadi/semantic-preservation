@@ -12,13 +12,14 @@ Fixpoint compile'' (p : Language.program) : Assembly.program :=
   | [] => []
   | Language.PtrInc :: h => Assembly.Add 1 :: compile'' h
   | Language.PtrDec :: h => Assembly.Sub 1 :: compile'' h
-  | Language.Inc :: h =>  Assembly.AddPtr 1 :: compile'' h
+  | Language.Inc :: h =>  Assembly.AddPtr 1 :: compile'' h (*FIX THIS*)
   | Language.Dec :: h =>  Assembly.SubPtr 1 :: compile'' h
   | Language.Jump :: h => Assembly.Skip   :: Assembly.UJUMP :: compile'' h
   | Language.Ret :: h =>  Assembly.Skip   :: Assembly.URET :: compile'' h
   | Language.Halt :: h => Assembly.Halt   :: compile'' h
   end.
 
+(*Incorrect*)
 Definition comp_first (x : Language.instr) : Assembly.instr :=
   match x with
   | Language.PtrInc => Assembly.Add 1
@@ -69,12 +70,6 @@ Fixpoint r_indexes (p : Assembly.program) : list nat :=
   | Assembly.URET :: t => 0 :: map S (r_indexes t)
   | _ :: t => map S (r_indexes t)
   end.
-
-(*
-
-Put a at the p{^ th} place of v
-Fixpoint replace {A n} (v : t A n) (p: Fin.t n) (a : A) {struct p}: t A n :=
-*)
 
 Fixpoint replace (v : list Assembly.instr) (p : nat) (a : Assembly.instr) : list Assembly.instr :=
   match v with

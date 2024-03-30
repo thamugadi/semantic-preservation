@@ -5,8 +5,6 @@ Require Import Common.
 Module Assembly.
 
 Inductive instr : Type :=
-  | Load : nat -> instr
-  | Store : nat -> instr
   | AddPtr : nat -> instr
   | SubPtr : nat -> instr
   | Add : nat -> instr
@@ -30,20 +28,15 @@ Definition read_instr (p : state) (i : instr) :=
   Common.lookup (prog p) (pc p) i.
 
 (* Small-step operational semantics for our target language.*)
-
+(*list_eq_except*)
 Inductive semantics (p p' : state) : Prop :=
-  | load :forall addr, read_instr p (Load addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' -> mem p = mem p' ->
-          Common.lookup (mem p) addr (ac p') -> semantics p p'
-  | store:forall addr, read_instr p (Store addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' -> ac p = ac p' ->
-          Common.list_eq_except (mem p) (mem p') [addr] ->
-          Common.lookup (mem p) addr (ac p) -> semantics p p'
   | add_ptr : forall addr, read_instr p (AddPtr addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' -> mem p = mem p' ->
+          pc p + 1 = pc p' -> prog p = prog p' ->
+          Common.list_eq_except (mem p) (mem p') [addr] ->
           Common.lookup (mem p) addr (ac p' - ac p) -> semantics p p'
   | sub_ptr : forall addr, read_instr p (SubPtr addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' -> mem p = mem p' ->
+          pc p + 1 = pc p' -> prog p = prog p' ->
+          Common.list_eq_except (mem p) (mem p') [addr] ->
           Common.lookup (mem p) addr (ac p - ac p') -> semantics p p'
   | add : forall imm, read_instr p (Add imm) ->
           pc p + 1 = pc p' -> prog p = prog p' -> mem p = mem p' ->
