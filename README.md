@@ -23,9 +23,9 @@ Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 
 ## Semantics
 
-- Small-step semantics for the two abstract machines: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
+- Small-step semantics for the two abstract machines are defined in [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
   
 ## Simulation property
 
-- The aim of [https://xavierleroy.org/publi/compcert-backend.pdf](Leroy's paper) is to describe how a source program S and a target program C retain the same semantics if the compilation process succeeds.
+- The aim of [Leroy's paper](https://xavierleroy.org/publi/compcert-backend.pdf) is to describe how a source program S and a target program C retain the same semantics if the compilation process succeeds.
 - Several relations are defined to express semantic preservation. In [src/Simulation.v](src/Simulation.v) are included the definitions to construct the lockstep, "plus", "option" and "star" simulation relations described in p. 16.
