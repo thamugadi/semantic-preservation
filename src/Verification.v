@@ -52,27 +52,44 @@ Proof.
 Qed.
 
 Lemma link_stable_lm1 :
-  forall p i,
-  (forall n, i <> Assembly.UJUMP /\ i <> Assembly.URET /\ i <> Assembly.Jump n) ->
-  Compiler.link (i::p) = i :: (map Compiler.inc_jump (Compiler.link p)).
+  forall xs i y,
+  (forall n, y <> Assembly.Jump n /\ y <> Assembly.UJUMP /\ y <> Assembly.URET) ->
+  Common.lookup (Compiler.link_aux xs) i y ->
+  Common.lookup (map Compiler.inc_jump (Compiler.link_aux xs)) i y.
 Proof.
-  intros.
-  destruct i; ssimpl.
-  exfalso.
-  apply H.
-  exact 0. reflexivity.
-  exfalso.
-  apply H1.
-  exact 0. reflexivity.
-Qed.
+Admitted.
+
+Lemma link_stable_lm2 :
+  forall x xs, exists x', ((Compiler.link_aux (x :: xs)) =
+  x' :: (map Compiler.inc_jump (Compiler.link_aux xs))).
+Proof.
+Admitted.
 
 Lemma link_stable : 
   forall p ind i,
-  (forall n, i <> Assembly.UJUMP /\ i <> Assembly.URET /\ i <> Assembly.Jump n) ->
+  (forall n, i <> Assembly.Jump n /\ i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
   Common.lookup p ind i -> 
   Common.lookup (Compiler.link p) ind i.
 Proof.
-Admitted.
+  intros.
+  rewrite Compiler.link_eq.
+  induction H0.
+  - ssimpl.
+    + exfalso. apply H1. exact 0. reflexivity.
+    + exfalso. apply H0. exact 0. reflexivity.
+  - assert (Common.lookup (Compiler.link_aux xs) i y).
+    apply IHlookup.
+    sfirstorder.
+    assert (exists x', ((Compiler.link_aux (x :: xs)) =
+    x' :: (map Compiler.inc_jump (Compiler.link_aux xs)))).
+    apply link_stable_lm2.
+    destruct H2.
+    rewrite H2.
+    apply Common.lu2.
+    apply link_stable_lm1.
+    sfirstorder.
+    assumption.
+Qed.
 
 Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
 Proof.
@@ -136,6 +153,8 @@ Proof.
     + simpl; reflexivity.
     + simpl; assumption.
     + simpl; inversion e1; reflexivity.
+    (* make an Ltac *)
+
 Admitted.
 
 End Verification.
