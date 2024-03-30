@@ -1,40 +1,31 @@
 # semantic-preservation
+## Introduction
 
-## Update (06/02/2024)
+The purpose of this repo is to give a minimal example of a compiler for which the forward simulation property is verified. The proof is located in [src/Verification.v](src/Verification.v)
 
-The purpose of this repo is to give a minimal example (not that minimal, I finally realized lol) of a compiler for which the forward simulation property is verified.
+I considered an abstract machine using absolute addresses for ``Jump`` as a target, and one using a BF-like ``Jump`` / ``Ret`` as a source. The small compiler used is defined in [src/Compiler.v](src/Compiler.v).
 
-I considered a brainfuck-like language, compiling to a kind of generic assembler; many aspects were difficult to handle in the forward simulation proof, notably the fact that after compilation, I need to resolve the absolute addresses for the jump operands.
+It is globally a matter of proving that given two source states p and p' and a target state q, if
 
-Proving forward 'plus' simulation is basically a matter of proving that if:
 - p compiles into q
 - p evaluates into p'
 
-then:
+then there exist q' such as:
 
 - p' compiles into q'
 - q evaluates+ into q'
 
 where "+" is the transitive closure.
 
-The proof remains incomplete, but the skeleton is there. For the moment, I'm thinking of putting the project on hold, as it turned out to be much more difficult than I had imagined. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics :)
+The proof remains incomplete. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics. 
 
-## Introduction
-
-- Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
-- This is an attempt to formalise the semantic conservation properties for compilers described in Xavier Leroy's paper.
-- This repository will try to use them to formally verify a compiler, defined in [src/Compiler.v](src/Compiler.v), transforming expressions between 2 toy languages.
+Main reference: https://xavierleroy.org/publi/compcert-backend.pdf
 
 ## Semantics
 
-- We define small-step semantics for two basic languages: a source language and an assembly language for a virtual architecture: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
+- Small-step semantics for the two abstract machines: [src/Language.v](src/Language.v) and [src/Assembly.v](src/Assembly.v)
   
 ## Simulation property
 
-- The aim of Leroy's paper is to describe how a source program S and a target program C retain the same semantics if the compilation process succeeds.
+- The aim of [https://xavierleroy.org/publi/compcert-backend.pdf](Leroy's paper) is to describe how a source program S and a target program C retain the same semantics if the compilation process succeeds.
 - Several relations are defined to express semantic preservation. In [src/Simulation.v](src/Simulation.v) are included the definitions to construct the lockstep, "plus", "option" and "star" simulation relations described in p. 16.
-
-## Proof of 'plus' simulation
-
-- The proof ([src/Verification.v](src/Verification.v)) is still incomplete.
-- Vectors are used instead of lists, as some lemmas were easier to prove for vectors, like read\_instr\_eq

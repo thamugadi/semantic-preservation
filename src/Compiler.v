@@ -4,7 +4,7 @@ Require Import Assembly.
 
 Require Import List.
 Import List.ListNotations.
-
+From Hammer Require Import Tactics.
 Module Compiler.
 
 Fixpoint compile'' (p : Language.program) : Assembly.program :=
@@ -143,10 +143,35 @@ Fixpoint map_aux (l : Assembly.program) : Assembly.program :=
   | a :: l' => a :: map_aux l'
   end.
 
-Theorem map_eq : forall l, map_aux l = map (inc_jump) l.
+Lemma map_len {A B} : forall f x, @length B (map f x) = @length A x.
+Proof.
+  intros.
+  induction x; hauto.
+Qed.
+
+Lemma ljlr_len : forall x, length (link_ret (link_jump x)) = length x.
 Admitted.
 
+Lemma link_len : forall x, length (link x) = length x.
+Proof.
+  intros.
+  unfold link.
+  cut (length (map inc_jump (link_ret (link_jump x))) = 
+      length (link_ret (link_jump x))).
+  intros.
+  rewrite H.
+  apply ljlr_len.
+  apply map_len.
+Qed.
+
+Theorem map_eq : forall l, map_aux l = map (inc_jump) l.
+Proof.
+  intros.
+  induction l;ssimpl.
+Qed.
+
 Theorem link_eq : forall l, link l = link_aux l.
+Proof.
 Admitted.
 
 Definition compile' (p : Language.state) : Assembly.state :=

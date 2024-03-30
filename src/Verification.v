@@ -51,20 +51,6 @@ Proof.
   auto.
 Qed.
 
-Lemma link_stable_lm1 :
-  forall xs i y,
-  (forall n, y <> Assembly.Jump n /\ y <> Assembly.UJUMP /\ y <> Assembly.URET) ->
-  Common.lookup (Compiler.link_aux xs) i y ->
-  Common.lookup (map Compiler.inc_jump (Compiler.link_aux xs)) i y.
-Proof.
-Admitted.
-
-Lemma link_stable_lm2 :
-  forall x xs, exists x', ((Compiler.link_aux (x :: xs)) =
-  x' :: (map Compiler.inc_jump (Compiler.link_aux xs))).
-Proof.
-Admitted.
-
 Lemma link_stable : 
   forall p ind i,
   (forall n, i <> Assembly.Jump n /\ i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
@@ -80,16 +66,7 @@ Proof.
   - assert (Common.lookup (Compiler.link_aux xs) i y).
     apply IHlookup.
     sfirstorder.
-    assert (exists x', ((Compiler.link_aux (x :: xs)) =
-    x' :: (map Compiler.inc_jump (Compiler.link_aux xs)))).
-    apply link_stable_lm2.
-    destruct H2.
-    rewrite H2.
-    apply Common.lu2.
-    apply link_stable_lm1.
-    sfirstorder.
-    assumption.
-Qed.
+Admitted.
 
 Lemma lm2 : forall p, Compiler.compile_index p 0 = 0.
 Proof.
@@ -153,8 +130,72 @@ Proof.
     + simpl; reflexivity.
     + simpl; assumption.
     + simpl; inversion e1; reflexivity.
-    (* make an Ltac *)
-
+  - apply Common.t_base.
+    apply Assembly.sub with (imm := 1).
+    + unfold Language.read_instr, Assembly.read_instr in *.
+      qsimpl.
+      assert (Assembly.Sub 1 = Compiler.comp_first Language.PtrDec).
+      now reflexivity.
+      apply link_stable. auto with *.
+      rewrite H.
+      apply comp_instr.
+      assumption.
+    + simpl.
+      unfold Language.read_instr in r.
+      inversion r.
+      * destruct p'; ssimpl.
+        destruct p; ssimpl.
+        assert (Compiler.compile_index xs 0 = 0).
+        apply lm2.
+        rewrite H.
+        reflexivity.
+      * rewrite H;
+        rewrite <- e;
+        rewrite <- e0;
+        rewrite H0;
+        destruct p; ssimpl; f_equal; rewrite trv; rewrite trv; f_equal;
+        (apply lm3 with (ins := Language.PtrDec)); try (split; discriminate);
+        assumption.
+    + simpl; reflexivity.
+    + simpl; assumption.
+    + simpl; inversion e1; reflexivity.
+  - apply Common.t_base.
+    apply Assembly.add_ptr with (addr := 1).
+    + unfold Language.read_instr, Assembly.read_instr in *.
+      qsimpl.
+      assert (Assembly.AddPtr 1 = Compiler.comp_first Language.Inc).
+      now reflexivity.
+      apply link_stable. auto with *.
+      rewrite H.
+      apply comp_instr.
+      assumption.
+    + simpl.
+      unfold Language.read_instr in r.
+      inversion r.
+      * destruct p'; ssimpl.
+        destruct p; ssimpl.
+        assert (Compiler.compile_index xs 0 = 0).
+        apply lm2.
+        rewrite H.
+        reflexivity.
+      * rewrite H. 
+        rewrite <- e.
+        rewrite <- e0.
+        rewrite H1; destruct p; ssimpl; f_equal; rewrite trv; rewrite trv; f_equal;
+        (apply lm3 with (ins := Language.Inc)); try (split; discriminate);
+        assumption.
+    + simpl; reflexivity.
+    + admit.
+    + admit.
+  - admit.
+  - destruct p'; ssimpl.
+  - admit.
+  - destruct p'; ssimpl.
+  - admit.
+  - destruct p'; ssimpl.
+  - admit.
+  - destruct p'; ssimpl.
+  - admit. 
 Admitted.
 
 End Verification.
