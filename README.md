@@ -1,7 +1,7 @@
 # semantic-preservation
 ## Introduction
 
-The purpose of this repo is to give a minimal example of a compiler for which the forward simulation property is verified. The proof is located in [src/Verification.v](src/Verification.v)
+The purpose of this repo is to give a minimal example of a compiler for which the forward simulation property is verified. The proof is located in [src/Verification.v](src/Verification.v).
 
 I considered an abstract machine using absolute addresses for ``Jump`` as a target, and one using a BF-like ``Jump`` / ``Ret`` as a source. The small compiler used is defined in [src/Compiler.v](src/Compiler.v).
 
