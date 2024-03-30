@@ -30,14 +30,16 @@ Definition read_instr (p : state) (i : instr) :=
 (* Small-step operational semantics for our target language.*)
 (*list_eq_except*)
 Inductive semantics (p p' : state) : Prop :=
-  | add_ptr : forall addr, read_instr p (AddPtr addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' ->
-          Common.list_eq_except (mem p) (mem p') [addr] ->
-          Common.lookup (mem p) addr (ac p' - ac p) -> semantics p p'
-  | sub_ptr : forall addr, read_instr p (SubPtr addr) ->
-          pc p + 1 = pc p' -> prog p = prog p' ->
-          Common.list_eq_except (mem p) (mem p') [addr] ->
-          Common.lookup (mem p) addr (ac p - ac p') -> semantics p p'
+  | add_ptr : forall imm, read_instr p (AddPtr imm) ->
+          pc p + 1 = pc p' -> prog p = prog p' -> ac p = ac p' ->
+          Common.list_eq_except (mem p) (mem p') [ac p] -> (forall x,
+          Common.lookup (mem p) (ac p) x -> Common.lookup (mem p') (ac p') (x+1)) ->
+          semantics p p'
+  | sub_ptr : forall imm, read_instr p (AddPtr imm) ->
+          pc p + 1 = pc p' -> prog p = prog p' -> ac p = ac p' ->
+          Common.list_eq_except (mem p) (mem p') [ac p] -> (forall x,
+          Common.lookup (mem p) (ac p) x -> Common.lookup (mem p') (ac p') (x-1)) ->
+          semantics p p'
   | add : forall imm, read_instr p (Add imm) ->
           pc p + 1 = pc p' -> prog p = prog p' -> mem p = mem p' ->
           ac p' = ac p + imm -> semantics p p'

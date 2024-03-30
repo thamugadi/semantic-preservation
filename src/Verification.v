@@ -160,7 +160,7 @@ Proof.
     + simpl; assumption.
     + simpl; inversion e1; reflexivity.
   - apply Common.t_base.
-    apply Assembly.add_ptr with (addr := Language.ptr p).
+    apply Assembly.add_ptr with (imm := Language.ptr p).
     + unfold Language.read_instr, Assembly.read_instr in *.
       qsimpl.
       admit.
@@ -183,6 +183,8 @@ Proof.
     + simpl.
       destruct p, p'; ssimpl.
     + admit.
+    + ssimpl.
+      admit.
   - admit.
   - destruct p'; ssimpl.
   - admit.
