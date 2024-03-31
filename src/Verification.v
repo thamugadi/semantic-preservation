@@ -160,10 +160,14 @@ Proof.
     + simpl; assumption.
     + simpl; inversion e1; reflexivity.
   - apply Common.t_base.
-    apply Assembly.add_ptr with (imm := Language.ptr p).
+    apply Assembly.add_ptr with (imm := 1).
     + unfold Language.read_instr, Assembly.read_instr in *.
-      qsimpl.
-      admit.
+      assert (Assembly.AddPtr 1 = Compiler.comp_first Language.Inc).
+      now reflexivity.
+      apply link_stable. auto with *.
+      rewrite H.
+      apply comp_instr.
+      assumption.
     + simpl.
       unfold Language.read_instr in r.
       inversion r.
@@ -182,8 +186,8 @@ Proof.
     + now reflexivity.
     + simpl.
       destruct p, p'; ssimpl.
-    + admit.
     + ssimpl.
+    + rewrite <- e1 in *. ssimpl.
       admit.
   - admit.
   - destruct p'; ssimpl.
