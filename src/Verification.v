@@ -218,13 +218,65 @@ Proof.
     + ssimpl.
     + rewrite <- e1 in *. ssimpl.
   - destruct p'; ssimpl.
-  - admit.
+  - remember (
+               {| Assembly.prog := Compiler.link (Compiler.compile'' (Language.prog p));
+                  Assembly.mem := Language.mem p';
+                  Assembly.pc := Compiler.compile_index (Language.prog p')
+                                  (Language.pc p');
+                  Assembly.ac := Language.ptr p' |}) as q'.
+    assert (exists q_inter, Assembly.semantics q_inter q').
+    admit.
+    destruct H.
+    rename x into q_inter.
+    apply Common.t_trans with (y := q_inter).
+    admit.
+    apply Common.t_base.
+    admit.
   - destruct p'; ssimpl.
-  - admit.
+  - remember (
+               {| Assembly.prog := Compiler.link (Compiler.compile'' (Language.prog p));
+                  Assembly.mem := Language.mem p';
+                  Assembly.pc := Compiler.compile_index (Language.prog p')
+                                  (Language.pc p');
+                  Assembly.ac := Language.ptr p' |}) as q'.
+    assert (exists q_inter, Assembly.semantics q_inter q').
+    admit.
+    destruct H.
+    rename x into q_inter.
+    apply Common.t_trans with (y := q_inter).
+    admit.
+    apply Common.t_base.
+    admit.
   - destruct p'; ssimpl.
-  - admit.
+  - remember (
+               {| Assembly.prog := Compiler.link (Compiler.compile'' (Language.prog p));
+                  Assembly.mem := Language.mem p';
+                  Assembly.pc := Compiler.compile_index (Language.prog p')
+                                  (Language.pc p');
+                  Assembly.ac := Language.ptr p' |}) as q'.
+    assert (exists q_inter, Assembly.semantics q_inter q').
+    admit.
+    destruct H.
+    rename x into q_inter.
+    apply Common.t_trans with (y := q_inter).
+    admit.
+    apply Common.t_base.
+    admit.
   - destruct p'; ssimpl.
-  - admit. 
+  - remember (
+               {| Assembly.prog := Compiler.link (Compiler.compile'' (Language.prog p));
+                  Assembly.mem := Language.mem p';
+                  Assembly.pc := Compiler.compile_index (Language.prog p')
+                                  (Language.pc p');
+                  Assembly.ac := Language.ptr p' |}) as q'.
+    assert (exists q_inter, Assembly.semantics q_inter q').
+    admit.
+    destruct H.
+    rename x into q_inter.
+    apply Common.t_trans with (y := q_inter).
+    admit.
+    apply Common.t_base.
+    admit.
 Admitted.
 
 End Verification.
