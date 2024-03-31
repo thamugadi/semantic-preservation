@@ -188,7 +188,35 @@ Proof.
       destruct p, p'; ssimpl.
     + ssimpl.
     + rewrite <- e1 in *. ssimpl.
-  - admit.
+  - apply Common.t_base.
+    apply Assembly.sub_ptr with (imm := 1).
+    + unfold Language.read_instr, Assembly.read_instr in *.
+      assert (Assembly.SubPtr 1 = Compiler.comp_first Language.Dec).
+      now reflexivity.
+      apply link_stable. auto with *.
+      rewrite H.
+      apply comp_instr.
+      assumption.
+    + simpl.
+      unfold Language.read_instr in r.
+      inversion r.
+      * destruct p'; ssimpl.
+        destruct p; ssimpl.
+        assert (Compiler.compile_index xs 0 = 0).
+        apply lm2.
+        rewrite H.
+        reflexivity.
+      * rewrite H. 
+        rewrite <- e.
+        rewrite <- e0.
+        rewrite H1; destruct p; ssimpl; f_equal; rewrite trv; rewrite trv; f_equal;
+        (apply lm3 with (ins := Language.Dec)); try (split; discriminate);
+        assumption.
+    + now reflexivity.
+    + simpl.
+      destruct p, p'; ssimpl.
+    + ssimpl.
+    + rewrite <- e1 in *. ssimpl.
   - destruct p'; ssimpl.
   - admit.
   - destruct p'; ssimpl.
