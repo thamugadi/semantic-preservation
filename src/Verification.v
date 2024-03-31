@@ -224,8 +224,7 @@ Proof.
                   Assembly.pc := Compiler.compile_index (Language.prog p')
                                   (Language.pc p');
                   Assembly.ac := Language.ptr p' |}) as q'.
-    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter /\
-                            Assembly.semantics q_inter q').
+    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter).
     admit.
     destruct H.
     rename x into q_inter.
@@ -240,8 +239,7 @@ Proof.
                   Assembly.pc := Compiler.compile_index (Language.prog p')
                                   (Language.pc p');
                   Assembly.ac := Language.ptr p' |}) as q'.
-    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter /\
-                            Assembly.semantics q_inter q').
+    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter).
     admit.
     destruct H.
     rename x into q_inter.
@@ -256,8 +254,7 @@ Proof.
                   Assembly.pc := Compiler.compile_index (Language.prog p')
                                   (Language.pc p');
                   Assembly.ac := Language.ptr p' |}) as q'.
-    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter /\
-                            Assembly.semantics q_inter q').
+    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter).
     admit.
     destruct H.
     rename x into q_inter.
@@ -272,8 +269,7 @@ Proof.
                   Assembly.pc := Compiler.compile_index (Language.prog p')
                                   (Language.pc p');
                   Assembly.ac := Language.ptr p' |}) as q'.
-    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter /\
-                            Assembly.semantics q_inter q').
+    assert (exists q_inter, Assembly.semantics (Compiler.compile' p) q_inter).
     admit.
     destruct H.
     rename x into q_inter.
