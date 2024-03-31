@@ -188,7 +188,6 @@ Proof.
       destruct p, p'; ssimpl.
     + ssimpl.
     + rewrite <- e1 in *. ssimpl.
-      admit.
   - admit.
   - destruct p'; ssimpl.
   - admit.

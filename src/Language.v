@@ -71,13 +71,13 @@ Inductive semantics (p p' : state) : Prop :=
   | inc     : read_instr p Inc -> prog p = prog p' -> pc p + 1 = pc p' ->
               ptr p = ptr p' ->
               Common.list_eq_except (mem p) (mem p') [ptr p] ->
-              forall M, (Common.lookup (mem p) (ptr p) M ->
-                         Common.lookup (mem p') (ptr p') (M+1)) -> semantics p p'
+              (forall M, (Common.lookup (mem p) (ptr p) M ->
+                         Common.lookup (mem p') (ptr p') (M+1))) -> semantics p p'
   | dec     : read_instr p Dec -> prog p = prog p' -> pc p + 1 = pc p' ->
               ptr p = ptr p' ->
               Common.list_eq_except (mem p) (mem p') [ptr p] ->
-              forall M, (Common.lookup (mem p) (ptr p) M ->
-                         Common.lookup (mem p') (ptr p') (M-1)) -> semantics p p'
+              (forall M, (Common.lookup (mem p) (ptr p) M ->
+                         Common.lookup (mem p') (ptr p') (M-1))) -> semantics p p'
   | jump_z  : read_instr p Jump -> ptr p = ptr p' -> prog p = prog p' -> mem p = mem p' -> 
               Common.lookup (mem p) (ptr p) 0 -> matching_ret (prog p) (pc p) (pc p') ->
               semantics p p'
