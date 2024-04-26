@@ -51,13 +51,6 @@ Proof.
   auto.
 Qed.
 
-Lemma lookup_link_stable :
-  forall x xs i y,
-  (forall n, y <> Assembly.Jump n) ->
-  Common.lookup (Compiler.link_aux xs) i y ->
-  Common.lookup (Compiler.link_aux (x::xs)) (S i) y.
-Admitted.
-
 Lemma link_stable : 
   forall p ind i,
   (forall n, i <> Assembly.Jump n /\ i <> Assembly.UJUMP /\ i <> Assembly.URET) ->
@@ -73,7 +66,7 @@ Proof.
   - assert (Common.lookup (Compiler.link_aux xs) i y).
     apply IHlookup.
     sfirstorder.
-    apply lookup_link_stable.
+    apply Compiler.lookup_link_stable.
     apply H.
     assumption.
 Qed.

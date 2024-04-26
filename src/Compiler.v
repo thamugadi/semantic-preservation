@@ -136,6 +136,14 @@ Fixpoint link_aux (l : Assembly.program) : Assembly.program :=
 Definition link (l : Assembly.program) : Assembly.program :=
   map (inc_jump) (link_ret (link_jump l)).
 
+
+Theorem lookup_link_stable :
+  forall x xs i y,
+  (forall n, y <> Assembly.Jump n) ->
+  Common.lookup (Compiler.link_aux xs) i y ->
+  Common.lookup (Compiler.link_aux (x::xs)) (S i) y.
+Admitted.
+
 Fixpoint map_aux (l : Assembly.program) : Assembly.program :=
   match l with
   | [] => []
