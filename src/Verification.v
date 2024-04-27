@@ -235,8 +235,8 @@ Proof.
     assert (Assembly.Skip = Compiler.comp_first Language.Jump).
     auto.
     rewrite H.
-    apply comp_instr.
-    assumption.
+    apply comp_instr. assumption.
+    (* skip not taken: q_inter points to Assembly.Jump n *)
     pose (q_inter :=
     {| Assembly.prog := Assembly.prog (Compiler.compile' p);
        Assembly.mem := Assembly.mem (Compiler.compile' p);

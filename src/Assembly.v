@@ -49,8 +49,8 @@ Inductive semantics (p p' : state) : Prop :=
   | jump: forall addr, read_instr p (Jump addr) ->
           prog p = prog p' -> mem p = mem p' -> ac p = ac p' ->
           pc p' = addr -> semantics p p'
-  | skipz: read_instr p Skip -> prog p = prog p' -> mem p = mem p' ->
-           ac p = ac p' -> ac p' = 0 -> pc p' = pc p + 2 -> semantics p p'
   | skipnz:read_instr p Skip -> prog p = prog p' -> mem p = mem p' ->
-           ac p = ac p' -> ac p' <> 0 -> pc p' = pc p + 1 -> semantics p p'.
+           ac p = ac p' -> ac p' <> 0 -> pc p' = pc p + 2 -> semantics p p'
+  | skipz: read_instr p Skip -> prog p = prog p' -> mem p = mem p' ->
+           ac p = ac p' -> ac p' = 0 -> pc p' = pc p + 1 -> semantics p p'.
 End Assembly.
