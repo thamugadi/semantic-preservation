@@ -266,7 +266,7 @@ Proof.
     remember (Compiler.compile_index (Language.prog p')
                                      (Language.pc p')) as n.
     apply Common.t_trans with (y := q_inter).
-    admit.
+    sfirstorder.
     apply Common.t_base.
     apply Assembly.jump with (addr := n); simpl; try assumption.
     + admit.
