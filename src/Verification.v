@@ -106,13 +106,19 @@ Theorem jump_ret_lm1 :
 Proof.
 Admitted. 
 
+Lemma lm4 : forall p i ins,
+            (ins = Language.Jump \/ ins = Language.Ret) ->
+            Common.lookup p i ins ->
+            Compiler.compile_index p i + 2 =
+            Compiler.compile_index p (i + 1).
+Admitted.
+
 Theorem jump_ret_lm2 :
   forall p, Language.read_instr p Language.Jump \/
             Language.read_instr p Language.Ret ->
   Compiler.compile_index (Language.prog p) (Language.pc p + 1) =
   Compiler.compile_index (Language.prog p) (Language.pc p) + 2.
 Admitted.
-
 
 Theorem th : Simulation.plus_forward_sim Compiler.compile 
              Language.semantics Assembly.semantics.
