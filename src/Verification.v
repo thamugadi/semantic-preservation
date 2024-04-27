@@ -89,6 +89,20 @@ Proof.
   rewrite trv; rewrite trv; repeat f_equal; try assumption.
 Qed.
 
+Theorem jump_lm1 : 
+  forall p p' q_inter, Language.semantics p p' ->
+  Language.read_instr p Language.Jump ->
+  q_inter =
+  {| Assembly.prog :=
+     Assembly.prog (Compiler.compile' p);
+     Assembly.mem := Assembly.mem (Compiler.compile' p);
+     Assembly.pc := Assembly.pc (Compiler.compile' p) + 1;
+     Assembly.ac := Assembly.ac (Compiler.compile' p);|} ->
+     (Assembly.read_instr q_inter
+     (Assembly.Jump (Compiler.compile_index (Language.prog p')
+                                            (Language.pc p')))).
+Admitted.
+
 Theorem th : Simulation.plus_forward_sim Compiler.compile 
              Language.semantics Assembly.semantics.
 Proof.
@@ -243,26 +257,27 @@ Proof.
        Assembly.pc := Assembly.pc (Compiler.compile' p) + 1;
        Assembly.ac := Assembly.ac (Compiler.compile' p);|}).
     assert (Assembly.semantics (Compiler.compile' p) q_inter).
-    apply Assembly.skipz; auto.
+    apply Assembly.skipz; simpl; try assumption; try reflexivity.
     (*remove exists*)
-    + assert (exists n, Assembly.read_instr q_inter (Assembly.Jump n)).
-      admit.
-      apply Common.t_trans with (y := q_inter).
-      admit.
-      apply Common.t_base.
-      destruct H2.
-      rename x into n.
-      apply Assembly.jump with (addr := n).
-      * admit.
-      * admit.
-      * admit.
-      * admit.
-      * admit.
-  - destruct p'; ssimpl.
+    assert (Assembly.read_instr q_inter
+           (Assembly.Jump (Compiler.compile_index (Language.prog p')
+                                                    (Language.pc p')))).
+    apply jump_lm1 with (p := p); auto with *; sfirstorder.
+    remember (Compiler.compile_index (Language.prog p')
+                                     (Language.pc p')) as n.
+    apply Common.t_trans with (y := q_inter).
+    admit.
+    apply Common.t_base.
+    apply Assembly.jump with (addr := n); simpl; try assumption.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+  - destruct p'; sauto.
   - admit.
-  - destruct p'; ssimpl.
+  - destruct p'; sauto.
   - admit.
-  - destruct p'; ssimpl.
+  - destruct p'; sauto.
   - admit.
 Admitted.
 
