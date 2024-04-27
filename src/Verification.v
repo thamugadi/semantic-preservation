@@ -243,14 +243,28 @@ Proof.
        Assembly.pc := Assembly.pc (Compiler.compile' p) + 1;
        Assembly.ac := Assembly.ac (Compiler.compile' p);|}).
     assert (Assembly.semantics (Compiler.compile' p) q_inter).
-    admit.
+    apply Assembly.skipz.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+
     (*remove exists*)
-    assert (exists n, Assembly.read_instr q_inter (Assembly.Jump n)).
-    admit.
-    apply Common.t_trans with (y := q_inter).
-    admit.
-    apply Common.t_base.
-    admit.
+    + assert (exists n, Assembly.read_instr q_inter (Assembly.Jump n)).
+      admit.
+      apply Common.t_trans with (y := q_inter).
+      admit.
+      apply Common.t_base.
+      destruct H2.
+      rename x into n.
+      apply Assembly.jump with (addr := n).
+      * admit.
+      * admit.
+      * admit.
+      * admit.
+      * admit.
   - destruct p'; ssimpl.
   - admit.
   - destruct p'; ssimpl.
