@@ -103,7 +103,16 @@ Theorem jump_ret_lm1 :
      (Assembly.read_instr q_inter
      (Assembly.Jump (Compiler.compile_index (Language.prog p')
                                             (Language.pc p')))).
+Proof.
+Admitted. 
+
+Theorem jump_ret_lm2 :
+  forall p, Language.read_instr p Language.Jump \/
+            Language.read_instr p Language.Ret ->
+  Compiler.compile_index (Language.prog p) (Language.pc p + 1) =
+  Compiler.compile_index (Language.prog p) (Language.pc p) + 2.
 Admitted.
+
 
 Theorem th : Simulation.plus_forward_sim Compiler.compile 
              Language.semantics Assembly.semantics.
@@ -271,11 +280,66 @@ Proof.
     apply Common.t_base.
     apply Assembly.jump with (addr := n); sauto.
   - destruct p'; sauto.
-  - admit. (* skip taken: q_inter isn't relevant*)
+(* skip taken: q_inter isn't relevant:*)
+  - apply Common.t_base.
+    apply Assembly.skipnz; auto.
+    assert (Assembly.Skip = Compiler.comp_first Language.Jump).
+    auto.
+    rewrite H.
+    unfold Compiler.compile'.
+    apply link_stable. sfirstorder.
+    apply comp_instr; try auto; ssimpl.
+    ssimpl. ssimpl.
+    rewrite <- e2.
+    rewrite <- e0.
+    apply jump_ret_lm2. auto.
   - destruct p'; sauto.
-  - admit. (*mirror of 2 previous proofs*)
-  - destruct p'; sauto.
-  - admit.
-Admitted.
+  - remember (
+    {| Assembly.prog := Compiler.link (Compiler.compile'' (Language.prog p));
+       Assembly.mem := Language.mem p';
+       Assembly.pc := Compiler.compile_index (Language.prog p')
+                      (Language.pc p');
+       Assembly.ac := Language.ptr p' |}) as q'.
+    assert (Assembly.read_instr (Compiler.compile' p) Assembly.Skip) as H1.
+    unfold Language.read_instr in r.
+    unfold Assembly.read_instr.
+    unfold Compiler.compile'. ssimpl.
+    apply link_stable. auto with *.
+    assert (Assembly.Skip = Compiler.comp_first Language.Ret).
+    auto.
+    rewrite H.
+    apply comp_instr; assumption.
+    (* skip not taken: q_inter points to Assembly.Jump n *)
+    pose (q_inter :=
+    {| Assembly.prog := Assembly.prog (Compiler.compile' p);
+       Assembly.mem := Assembly.mem (Compiler.compile' p);
+       Assembly.pc := Assembly.pc (Compiler.compile' p) + 1;
+       Assembly.ac := Assembly.ac (Compiler.compile' p);|}).
+    assert (Assembly.semantics (Compiler.compile' p) q_inter).
+    apply Assembly.skipz; simpl; try assumption; try reflexivity.
+    assert (Assembly.read_instr q_inter
+           (Assembly.Jump (Compiler.compile_index (Language.prog p')
+                                                    (Language.pc p')))).
+    apply jump_ret_lm1 with (p := p); auto with *; sfirstorder.
+    remember (Compiler.compile_index (Language.prog p')
+                                     (Language.pc p')) as n.
+    apply Common.t_trans with (y := q_inter).
+    sfirstorder.
+    apply Common.t_base.
+    apply Assembly.jump with (addr := n); sauto.
+  - destruct p'. sauto.
+  - apply Common.t_base.
+    apply Assembly.skipnz; auto.
+    assert (Assembly.Skip = Compiler.comp_first Language.Ret).
+    auto.
+    rewrite H.
+    unfold Compiler.compile'.
+    apply link_stable. sfirstorder.
+    apply comp_instr; try auto; ssimpl.
+    ssimpl. ssimpl.
+    rewrite <- e2.
+    rewrite <- e0.
+    apply jump_ret_lm2. auto.
+Qed.
 
 End Verification.

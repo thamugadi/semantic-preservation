@@ -41,7 +41,6 @@ Fixpoint compile_index (p : Language.program) (x : nat) : nat :=
          end
   end.
 
-
 Fixpoint nb_jump (p : Assembly.program) : nat :=
   match p with
   | [] => 0
