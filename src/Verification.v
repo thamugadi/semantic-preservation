@@ -235,7 +235,7 @@ Proof.
     assert (Assembly.Skip = Compiler.comp_first Language.Jump).
     auto.
     rewrite H.
-    apply comp_instr. assumption.
+    apply comp_instr; assumption.
     (* skip not taken: q_inter points to Assembly.Jump n *)
     pose (q_inter :=
     {| Assembly.prog := Assembly.prog (Compiler.compile' p);
@@ -243,14 +243,7 @@ Proof.
        Assembly.pc := Assembly.pc (Compiler.compile' p) + 1;
        Assembly.ac := Assembly.ac (Compiler.compile' p);|}).
     assert (Assembly.semantics (Compiler.compile' p) q_inter).
-    apply Assembly.skipz.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-
+    apply Assembly.skipz; auto.
     (*remove exists*)
     + assert (exists n, Assembly.read_instr q_inter (Assembly.Jump n)).
       admit.
