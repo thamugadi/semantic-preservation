@@ -228,7 +228,15 @@ Proof.
                       (Language.pc p');
        Assembly.ac := Language.ptr p' |}) as q'.
     assert (Assembly.read_instr (Compiler.compile' p) Assembly.Skip) as H1.
-    admit.
+    unfold Language.read_instr in r.
+    unfold Assembly.read_instr.
+    unfold Compiler.compile'. ssimpl.
+    apply link_stable. auto with *.
+    assert (Assembly.Skip = Compiler.comp_first Language.Jump).
+    auto.
+    rewrite H.
+    apply comp_instr.
+    assumption.
     pose (q_inter :=
     {| Assembly.prog := Assembly.prog (Compiler.compile' p);
        Assembly.mem := Assembly.mem (Compiler.compile' p);
