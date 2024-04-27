@@ -89,9 +89,11 @@ Proof.
   rewrite trv; rewrite trv; repeat f_equal; try assumption.
 Qed.
 
-Theorem jump_lm1 : 
+Theorem jump_ret_lm1 : 
   forall p p' q_inter, Language.semantics p p' ->
-  Language.read_instr p Language.Jump ->
+  Language.read_instr p Language.Jump \/
+  Language.read_instr p Language.Ret ->
+  Common.lookup (Language.mem p) (Language.ptr p) 0 ->
   q_inter =
   {| Assembly.prog :=
      Assembly.prog (Compiler.compile' p);
@@ -258,25 +260,20 @@ Proof.
        Assembly.ac := Assembly.ac (Compiler.compile' p);|}).
     assert (Assembly.semantics (Compiler.compile' p) q_inter).
     apply Assembly.skipz; simpl; try assumption; try reflexivity.
-    (*remove exists*)
     assert (Assembly.read_instr q_inter
            (Assembly.Jump (Compiler.compile_index (Language.prog p')
                                                     (Language.pc p')))).
-    apply jump_lm1 with (p := p); auto with *; sfirstorder.
+    apply jump_ret_lm1 with (p := p); auto with *; sfirstorder.
     remember (Compiler.compile_index (Language.prog p')
                                      (Language.pc p')) as n.
     apply Common.t_trans with (y := q_inter).
     sfirstorder.
     apply Common.t_base.
-    apply Assembly.jump with (addr := n); simpl; try assumption.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
+    apply Assembly.jump with (addr := n); sauto.
   - destruct p'; sauto.
-  - admit.
+  - admit. (* skip taken: q_inter isn't relevant*)
   - destruct p'; sauto.
-  - admit.
+  - admit. (*mirror of 2 previous proofs*)
   - destruct p'; sauto.
   - admit.
 Admitted.
