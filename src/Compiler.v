@@ -129,6 +129,7 @@ Fixpoint link_aux (l : Assembly.program) : Assembly.program :=
   | [] => []
   | Assembly.UJUMP :: t => map (inc_jump) (link_ret (link_jump l))
   | Assembly.URET  :: t => map (inc_jump) (link_ret (link_jump l))
+  | Assembly.Jump n:: t => (Assembly.Jump (n+1)) :: map inc_jump (link_aux t)
   | a :: t => a :: map inc_jump (link_aux t)
   end.
 
@@ -189,6 +190,7 @@ Definition compile' (p : Language.state) : Assembly.state :=
 
 Inductive compile (p : Language.state) (q : Assembly.state) : Prop :=
   | comp : q = compile' p -> compile p q.
+
 
 End Compiler.
 (*
