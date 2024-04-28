@@ -139,9 +139,11 @@ Definition link (l : Assembly.program) : Assembly.program :=
 
 Theorem lookup_link_stable :
   forall x xs i y,
-  (forall n, y <> Assembly.Jump n) ->
+  (forall n, y <> Assembly.Jump n) -> y <> Assembly.URET ->
+  y <> Assembly.UJUMP ->
   Common.lookup (Compiler.link_aux xs) i y ->
   Common.lookup (Compiler.link_aux (x::xs)) (S i) y.
+Proof.
 Admitted.
 
 Fixpoint map_aux (l : Assembly.program) : Assembly.program :=

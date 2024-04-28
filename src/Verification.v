@@ -66,8 +66,7 @@ Proof.
   - assert (Common.lookup (Compiler.link_aux xs) i y).
     apply IHlookup.
     sfirstorder.
-    apply Compiler.lookup_link_stable.
-    apply H.
+    apply Compiler.lookup_link_stable; try apply H; try exact 0.
     assumption.
 Qed.
 
