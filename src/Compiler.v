@@ -69,12 +69,6 @@ Fixpoint r_indexes (p : Assembly.program) : list nat :=
   | _ :: t => map S (r_indexes t)
   end.
 
-(*
-
-Put a at the p{^ th} place of v
-Fixpoint replace {A n} (v : t A n) (p: Fin.t n) (a : A) {struct p}: t A n :=
-*)
-
 Fixpoint replace (v : list Assembly.instr) (p : nat) (a : Assembly.instr) : list Assembly.instr :=
   match v with
   | [] => v
@@ -161,7 +155,7 @@ Qed.
 
 Lemma ljlr_len : forall x, length (link_ret (link_jump x)) = length x.
 Admitted.
-
+    
 Lemma link_len : forall x, length (link x) = length x.
 Proof.
   intros.
@@ -195,9 +189,8 @@ Inductive compile (p : Language.state) (q : Assembly.state) : Prop :=
 
 
 End Compiler.
-(*
+
 Require Import ExtrOcamlBasic.
 Require Import ExtrOcamlNatInt.
 Extraction Language OCaml.
 Recursive Extraction Compiler.compile'.
-*)
