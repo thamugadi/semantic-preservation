@@ -5,6 +5,8 @@ The purpose of this repo is to give a minimal example of a compiler for which th
 
 The proof of some lemmas is still missing, and those are admitted for the moment. This was my first real contact with Coq and dependent types, and it allowed me to make progress on the basics. Also, it makes extensive use of CoqHammer, which makes some proofs quite incomprehensible.
 
+The ``first_attempt`` folder contains previous attempts to prove the property, in particular through an approach using vectors, in the belief that this would simplify the proof of certain lemmas (it didn't).
+
 I considered an abstract machine using absolute addresses for ``Jump`` as a target, and one using a BF-like ``Jump`` / ``Ret`` as a source. The small compiler used is defined in [src/Compiler.v](src/Compiler.v).
 
 It is globally a matter of proving that given two source states p and p' and a target state q, if
